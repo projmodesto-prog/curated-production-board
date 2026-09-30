@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Curated Events — Tenting Routes + Employee Slides — MVIX V127 CELL HIGHLIGHTS</title>
+<title>Curated Events — Tenting Routes + Employee Slides — MVIX V128 RESPONSIVE</title>
 <style>
 :root {
   --bg:#061015;
@@ -281,6 +281,292 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 #weeklyScheduleTable td.hl-pink,#todayCrewTable td.hl-pink{background:#F48FB1!important;color:#260914!important;font-weight:950!important}
 
 @media (prefers-reduced-motion:reduce){.extraSlide.isActive{animation:none!important}}
+
+
+
+/* V128 — RESPONSIVE MOBILE LAYOUT
+   Desktop / MVIX keeps the existing 1920x1080 composition unchanged.
+   Phones and small tablets switch to a readable stacked layout. */
+@media (max-width:960px){
+  html,body{
+    width:100%;
+    height:auto;
+    min-height:100%;
+    overflow-x:hidden;
+    overflow-y:auto;
+    background:#03090d;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+  }
+  #viewport{
+    position:relative;
+    inset:auto;
+    display:block;
+    width:100%;
+    min-height:100vh;
+    overflow:visible;
+    background:linear-gradient(180deg,#07131a,#03090d);
+  }
+  .board{
+    position:relative;
+    width:100%;
+    height:auto;
+    min-height:100vh;
+    overflow:visible;
+    transform:none!important;
+    transform-origin:top left;
+    padding:10px 0 18px;
+    background:linear-gradient(180deg,#07131a,#03090d);
+  }
+  .board:after{display:none}
+
+  /* Header becomes a compact two-column mobile dashboard. */
+  .topbar{
+    position:relative;
+    left:auto;right:auto;top:auto;
+    width:auto;
+    height:auto;
+    margin:0 10px 10px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-template-areas:
+      "hero hero"
+      "now forecast"
+      "traffic logo";
+    gap:0;
+    overflow:hidden;
+    border-radius:8px;
+  }
+  .hero{grid-area:hero;min-height:112px;border-bottom:1px solid #29414a}
+  .heroText{position:relative;left:auto;top:auto;padding:20px 18px 16px}
+  .heroTitle{font-size:29px;line-height:1.05;letter-spacing:-.6px;white-space:normal}
+  .heroTitle .dash{margin:0 7px}
+  #dateText{margin-top:12px;font-size:14px;line-height:1.25;letter-spacing:2px}
+
+  .nowPanel{grid-area:now;min-height:145px;border-left:0;border-right:1px solid #29414a;padding:10px}
+  #timeText{grid-template-columns:1fr;gap:4px}
+  .clockCurrentTime{font-size:27px}
+  .clockCurrentDate{font-size:11px;padding:5px 6px;width:max-content;max-width:100%}
+  #weatherNowTemp{font-size:30px}
+  #weatherNowDesc{font-size:10px;white-space:normal}
+  #weatherNowHiLo{font-size:9px}
+
+  .forecastPanel{grid-area:forecast;min-height:145px;border-left:0;padding:10px 8px}
+  .forecastTitle{font-size:13px;text-align:center}
+  #forecastGrid{height:auto;min-height:100px}
+  .forecastDay{padding:2px 3px;font-size:10px}
+  .forecastTemp{font-size:16px}
+  .forecastHiLo{font-size:8px}
+
+  .trafficPanel{grid-area:traffic;min-height:132px;border-left:0;border-top:1px solid #29414a;border-right:1px solid #29414a}
+  .logoPanel{grid-area:logo;min-height:132px;border-left:0;border-top:1px solid #29414a;padding:14px}
+  .logoPanel img{max-height:100px}
+
+  /* Routes become stacked cards so every field is readable on a phone. */
+  #tableWrap{
+    position:relative;
+    left:auto;right:auto;top:auto;
+    width:auto;
+    height:auto;
+    margin:0 10px 10px;
+    overflow:visible;
+    background:transparent;
+    border:0;
+    border-radius:0;
+  }
+  #routeTable{display:block;width:100%;height:auto;background:transparent}
+  #routeTable colgroup,#routeTable thead{display:none}
+  #routeTable tbody{display:block;width:100%}
+  #routesBody tr{
+    display:block;
+    width:100%;
+    margin:0 0 10px;
+    overflow:hidden;
+    border:1px solid #8ea1aa;
+    border-radius:8px;
+    background:#f8fafb;
+    box-shadow:0 5px 16px rgba(0,0,0,.22);
+  }
+  #routesBody tr td{
+    display:grid!important;
+    grid-template-columns:88px minmax(0,1fr);
+    align-items:center;
+    gap:9px;
+    width:100%;
+    min-height:43px;
+    padding:8px 10px!important;
+    border-right:0!important;
+    border-bottom:1px solid #d1d9dc!important;
+    background:#f8fafb!important;
+    color:#101416!important;
+    text-align:left!important;
+    font-size:14px!important;
+    line-height:1.2!important;
+    overflow:visible!important;
+  }
+  #routesBody tr td:last-child{border-bottom:0!important}
+  #routesBody tr td::before{
+    display:block;
+    font-size:10px;
+    line-height:1.1;
+    font-weight:950;
+    letter-spacing:.8px;
+    color:#4e6068;
+  }
+  #routesBody tr td:nth-child(1)::before{content:"TIME"}
+  #routesBody tr td:nth-child(2)::before{content:"TRUCK"}
+  #routesBody tr td:nth-child(3)::before{content:"DRIVER"}
+  #routesBody tr td:nth-child(4)::before{content:"CREW"}
+  #routesBody tr td:nth-child(5)::before{content:"CONTRACT"}
+  #routesBody tr td:nth-child(6)::before{content:"LOCATION"}
+  #routesBody tr td:nth-child(7)::before{content:"TYPE / NOTES"}
+  #routesBody td:nth-child(6){padding-left:10px!important}
+  .driverBadge{min-width:0;max-width:100%;width:max-content;padding:6px 10px}
+  .crewCell{justify-content:flex-start}
+  .crewPerson{padding:5px 8px}
+  .contractFull{white-space:normal;overflow:visible;text-overflow:clip;font-size:1em!important;overflow-wrap:anywhere}
+  .locationFull{white-space:normal;overflow-wrap:anywhere}
+  .statusBadgeWrap{justify-content:flex-start}
+  .statusBadge{min-width:0;padding:5px 8px}
+
+  /* Message bar stacks so text is not clipped. */
+  .infoTicker{
+    position:relative;
+    left:auto;right:auto;top:auto;
+    width:auto;
+    height:auto;
+    margin:0 10px 10px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:5px;
+    padding:5px;
+    overflow:visible;
+  }
+  .tickerItem{min-height:48px;height:auto;padding:9px 11px}
+  .tickerItem:not(:last-child){border-right:1px solid rgba(var(--msgAccent),.28)}
+  .tickerCopy{white-space:normal;overflow:visible;text-overflow:clip;font-size:13px;line-height:1.25}
+
+  /* Bottom photos become a touch-friendly grid. */
+  .bottomBar{
+    position:relative;
+    left:auto;right:auto;top:auto;
+    width:auto;
+    height:auto;
+    margin:0 10px;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .nextCard{grid-column:1/-1;height:96px;padding:15px 18px 27px}
+  #slideTimer{font-size:17px}
+  .slideProgress{left:18px;right:18px;bottom:14px}
+  .photoCard{height:170px}
+  .photoCard:last-child{grid-column:1/-1}
+
+  /* Secondary slides stay full-screen, but become scrollable and readable. */
+  .extraSlide{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    padding:10px;
+    overflow-x:hidden;
+    overflow-y:auto;
+    background:linear-gradient(180deg,#07131a 0%,#03090d 100%);
+  }
+  .extraSlideHeader{
+    position:relative;
+    left:auto;right:auto;top:auto;
+    width:100%;
+    height:auto;
+    display:grid;
+    grid-template-columns:1fr;
+    margin:0 0 10px;
+    overflow:hidden;
+  }
+  .extraBrand{height:78px;padding:10px 18px;border-right:0;border-bottom:1px solid #29414a}
+  .extraBrand img{max-width:230px;max-height:62px}
+  .extraTitleBlock{padding:16px 14px;text-align:center}
+  .extraTitle{font-size:27px;line-height:1.08;white-space:normal}
+  .extraSubtitle{margin-top:8px;font-size:12px;line-height:1.25;letter-spacing:1px;white-space:normal}
+  .extraClock{
+    height:auto;
+    padding:10px 14px;
+    flex-direction:row;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+    border-left:0;
+    border-top:1px solid #29414a;
+  }
+  .extraClockDate{font-size:13px}
+  .extraClockTime{font-size:26px;margin-top:0}
+  .extraSlideBody{
+    position:relative;
+    left:auto;right:auto;top:auto;bottom:auto;
+    width:100%;
+    height:auto;
+    min-height:420px;
+    margin:0 0 10px;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .extraFooter{
+    position:relative;
+    left:auto;right:auto;bottom:auto;
+    width:100%;
+    min-height:44px;
+    height:auto;
+    padding:9px 12px;
+    gap:8px;
+    flex-wrap:wrap;
+    font-size:11px;
+  }
+  .extraCountdown{font-size:12px}
+
+  /* Weekly schedule keeps all columns and allows side-to-side swipe. */
+  #weeklyScheduleTable{min-width:1120px;height:auto;table-layout:fixed}
+  #weeklyScheduleTable th{font-size:14px;padding:7px 6px}
+  #weeklyScheduleTable td{font-size:12px;padding:5px 6px}
+
+  /* Today's crew remains simple; horizontal swipe is available if needed. */
+  .todayCrewBody{padding:10px;min-height:420px}
+  .todayCrewSummary{
+    height:auto;
+    min-height:92px;
+    padding:14px;
+    margin-bottom:10px;
+    gap:10px;
+  }
+  .todayCrewSummaryTitle{font-size:18px}
+  .todayCrewSummaryNote{font-size:12px}
+  #todayCrewCount{font-size:32px}
+  #todayCrewTableWrap{height:auto;min-height:300px;overflow:auto}
+  #todayCrewTable{min-width:620px;height:auto}
+  #todayCrewTable th{font-size:14px;padding:8px 10px}
+  #todayCrewTable td{font-size:14px;padding:7px 10px}
+  #todayCrewTable td:nth-child(2){font-size:13px}
+  #todayCrewTable td:last-child{font-size:15px}
+}
+
+/* Small phones get a single-column utility header and photo list. */
+@media (max-width:520px){
+  .topbar{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "hero"
+      "now"
+      "forecast"
+      "traffic"
+      "logo";
+  }
+  .nowPanel,.trafficPanel{border-right:0}
+  .nowPanel,.forecastPanel,.trafficPanel,.logoPanel{min-height:122px}
+  .heroTitle{font-size:26px}
+  .bottomBar{grid-template-columns:1fr}
+  .nextCard,.photoCard,.photoCard:last-child{grid-column:1}
+  .photoCard{height:210px}
+  #routesBody tr td{grid-template-columns:82px minmax(0,1fr);font-size:13.5px!important}
+}
 
 </style>
 </head>
@@ -1913,6 +2199,13 @@ function tick(){
 function fitBoardV100(){
   const board=document.querySelector('.board');
   if(!board) return;
+
+  // Phones and small tablets use the responsive CSS layout instead of shrinking
+  // the 1920x1080 TV board into an unreadable miniature.
+  if(window.matchMedia && window.matchMedia('(max-width: 960px)').matches){
+    board.style.transform = 'none';
+    return;
+  }
 
   // MVIX can preload HTML content while the player frame is temporarily 0x0.
   // If we scale at that moment, the board becomes scale(0) and stays invisible.
