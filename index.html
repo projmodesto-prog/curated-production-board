@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Curated Events — Tenting Routes + Employee Slides — MVIX V129 MOBILE SINGLE SCREEN</title>
+<title>Curated Events — Tenting Routes + Employee Slides — MVIX V130 MOBILE COMPLETE CARDS</title>
 <style>
 :root {
   --bg:#061015;
@@ -582,6 +582,220 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 @media (max-width:960px) and (orientation:landscape){
   html,body{overflow:hidden!important}
 }
+
+
+/* V130 — PORTRAIT MOBILE COMPLETE ROUTE CARDS
+   Keeps MVIX/TV untouched. On phones, each route is a complete card and the
+   route list scrolls inside its own panel so CONTRACT / LOCATION / TYPE are
+   never clipped just because there are many routes. */
+@media (max-width:960px) and (orientation:portrait){
+  :root{
+    --m-head:132px;
+    --m-ticker:42px;
+  }
+
+  /* Keep the utility area compact so routes receive most of the screen. */
+  .topbar{
+    height:var(--m-head)!important;
+    grid-template-columns:1fr 1fr!important;
+    grid-template-rows:44px 56px 32px!important;
+  }
+  .heroText{left:10px!important;right:8px!important;top:7px!important}
+  .heroTitle{font-size:clamp(15px,4.25vw,19px)!important;line-height:1!important;white-space:nowrap!important}
+  #dateText{margin-top:5px!important;font-size:7px!important;letter-spacing:.8px!important}
+
+  .nowPanel{padding:4px 6px!important;grid-template-rows:24px 1fr!important}
+  #timeText{padding-bottom:2px!important}
+  .clockCurrentTime{font-size:16px!important}
+  .clockCurrentDate{font-size:5.8px!important;padding:2px 3px!important}
+  .nowWeatherRow{padding-top:3px!important}
+  #weatherNowIcon{width:22px!important;min-width:22px!important;height:22px!important}
+  #weatherNowIcon .wxSvg{width:22px!important;height:22px!important}
+  #weatherNowTemp{font-size:18px!important}
+  #weatherNowDesc{font-size:6px!important;margin-top:1px!important;max-width:95px!important}
+  #weatherNowHiLo{font-size:5.4px!important;margin-top:1px!important}
+
+  .forecastPanel{padding:4px 3px 2px!important}
+  .forecastTitle{font-size:7px!important;margin-bottom:2px!important}
+  #forecastGrid{height:calc(100% - 9px)!important}
+  .forecastDay{font-size:5.3px!important}
+  .forecastIcon{height:17px!important;margin:0 auto!important}
+  .forecastIcon .wxSvg{width:17px!important;height:17px!important}
+  .forecastTemp{font-size:9px!important}
+  .forecastHiLo{font-size:4.7px!important}
+
+  .trafficLabel{top:3px!important;bottom:3px!important;left:5px!important;padding:2px 4px!important;font-size:6px!important;min-width:84px!important}
+  .trafficLabel small,.trafficLabel em{font-size:4.8px!important;margin-top:1px!important}
+  .trafficDelay{right:5px!important;bottom:7px!important;font-size:5.5px!important;padding:2px 3px!important}
+  .logoPanel img{max-height:26px!important}
+
+  /* The ROUTES panel stays inside the one phone viewport, but its contents
+     can scroll. This is what prevents individual route cards being chopped. */
+  #tableWrap{
+    top:calc(var(--m-head) + 12px)!important;
+    bottom:calc(var(--m-ticker) + 12px)!important;
+    overflow:hidden!important;
+    background:#061015!important;
+  }
+  #routeTable{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    background:#061015!important;
+  }
+  #routeTable tbody,
+  #routesBody{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    padding:6px!important;
+    scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+  }
+
+  #routesBody tr{
+    display:grid!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:124px!important;
+    max-height:none!important;
+    flex:none!important;
+    margin:0 0 7px!important;
+    padding:0!important;
+    overflow:hidden!important;
+    border:1px solid #9eafb6!important;
+    border-radius:8px!important;
+    box-shadow:0 2px 7px rgba(0,0,0,.18)!important;
+    background:#f7f9fa!important;
+    grid-template-columns:24% 24% 52%!important;
+    grid-template-rows:28px 30px 30px 36px!important;
+  }
+  #routesBody tr:last-child{margin-bottom:0!important}
+  #routesBody tr:nth-child(even){background:#edf2f4!important}
+
+  #routesBody tr td{
+    display:grid!important;
+    grid-template-columns:max-content minmax(0,1fr)!important;
+    column-gap:5px!important;
+    align-items:center!important;
+    align-content:center!important;
+    justify-items:start!important;
+    min-width:0!important;
+    min-height:0!important;
+    width:auto!important;
+    height:auto!important;
+    margin:0!important;
+    padding:3px 5px!important;
+    border-right:1px solid #d0dadd!important;
+    border-bottom:1px solid #d0dadd!important;
+    color:#101416!important;
+    background:transparent!important;
+    font-size:clamp(9px,2.55vw,11px)!important;
+    line-height:1.05!important;
+    font-weight:850!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+  }
+  #routesBody tr td::before{
+    display:block!important;
+    margin:0!important;
+    font-size:clamp(5.5px,1.55vw,6.8px)!important;
+    line-height:1!important;
+    font-weight:950!important;
+    letter-spacing:.35px!important;
+    color:#566970!important;
+    white-space:nowrap!important;
+  }
+
+  /* Row 1: TIME | TRUCK | TYPE */
+  #routesBody tr td:nth-child(1){grid-column:1;grid-row:1}
+  #routesBody tr td:nth-child(2){grid-column:2;grid-row:1}
+  #routesBody tr td:nth-child(7){grid-column:3;grid-row:1;border-right:0!important}
+
+  /* Row 2: DRIVER | CONTRACT */
+  #routesBody tr td:nth-child(3){grid-column:1 / span 2;grid-row:2}
+  #routesBody tr td:nth-child(5){grid-column:3;grid-row:2;border-right:0!important}
+
+  /* Row 3: CREW full width */
+  #routesBody tr td:nth-child(4){grid-column:1 / span 3;grid-row:3;border-right:0!important}
+
+  /* Row 4: LOCATION full width */
+  #routesBody tr td:nth-child(6){grid-column:1 / span 3;grid-row:4;border-right:0!important;border-bottom:0!important}
+
+  #routesBody tr td:nth-child(1)::before{content:"TIME"}
+  #routesBody tr td:nth-child(2)::before{content:"TRUCK"}
+  #routesBody tr td:nth-child(3)::before{content:"DRIVER"}
+  #routesBody tr td:nth-child(4)::before{content:"CREW"}
+  #routesBody tr td:nth-child(5)::before{content:"CONTRACT"}
+  #routesBody tr td:nth-child(6)::before{content:"LOCATION"}
+  #routesBody tr td:nth-child(7)::before{content:"TYPE"}
+
+  .driverBadge{
+    display:inline-block!important;
+    width:auto!important;
+    max-width:100%!important;
+    min-width:0!important;
+    padding:2px 5px!important;
+    font-size:inherit!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .crewCell{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    gap:3px!important;
+    width:100%!important;
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  .crewPerson{font-size:.9em!important;padding:2px 4px!important;white-space:nowrap!important}
+
+  .contractFull{
+    display:-webkit-box!important;
+    width:100%!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    line-height:1.05!important;
+    font-size:inherit!important;
+  }
+  .locationFull{
+    display:-webkit-box!important;
+    width:100%!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    line-height:1.08!important;
+    font-size:inherit!important;
+    overflow-wrap:anywhere!important;
+  }
+  .statusBadgeWrap{
+    display:flex!important;
+    width:100%!important;
+    min-width:0!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    flex-wrap:nowrap!important;
+    gap:3px!important;
+    overflow:hidden!important;
+  }
+  .statusBadge{font-size:.78em!important;padding:2px 4px!important;white-space:nowrap!important}
+
+  .infoTicker{height:var(--m-ticker)!important}
+}
+
 </style>
 </head>
 <body>
