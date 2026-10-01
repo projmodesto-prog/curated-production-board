@@ -467,7 +467,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   #routesBody tr td:nth-child(4)::before{content:"CREW"}
   #routesBody tr td:nth-child(5)::before{content:"CONTRACT"}
   #routesBody tr td:nth-child(6)::before{content:"LOCATION"}
-  #routesBody tr td:nth-child(7)::before{content:"TYPE"}
+  #routesBody tr td:nth-child(7)::before{content:"NOTES"}
   .driverBadge{
     display:block!important;
     width:100%!important;
@@ -841,7 +841,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
     <div id="tableWrap">
       <table id="routeTable">
         <colgroup><col><col><col><col><col><col><col></colgroup>
-        <thead><tr><th>TIME</th><th>TRUCK</th><th>DRIVER</th><th>CREW</th><th>CONTRACT</th><th>LOCATION</th><th>TYPE / NOTES</th></tr></thead>
+        <thead><tr><th>TIME</th><th>TRUCK</th><th>DRIVER</th><th>CREW</th><th>CONTRACT</th><th>LOCATION</th><th>NOTES</th></tr></thead>
         <tbody id="routesBody"></tbody>
       </table>
     </div>
@@ -997,8 +997,7 @@ function renderCachedWeatherFast(){
     document.querySelector('.nowPanel')?.setAttribute('data-weather', weatherClass(current.weather_code));
     document.getElementById('weatherNowTemp').textContent = Math.round(current.temperature_2m) + '°F';
     document.getElementById('weatherNowDesc').textContent = todayInfo.desc;
-    document.getElementById('weatherNowHiLo').textContent =
-      'H: ' + Math.round(daily.temperature_2m_max?.[0]) + '°F | L: ' +
+    document.getElementById('weatherNowHiLo').textContent =      'H: ' + Math.round(daily.temperature_2m_max?.[0]) + '°F | L: ' +
       Math.round(daily.temperature_2m_min?.[0]) + '°F';
 
     const grid = document.getElementById('forecastGrid');
@@ -1963,7 +1962,7 @@ function render(rows, settings = {}){
       <td>${crewPills(r[3])}</td>
       <td><span class="contractFull">${esc(formatContracts(r[4]))}</span></td>
       <td><span class="locationFull">${esc(r[5])}</span></td>
-      <td>${routeStatusBadges(r[6])}</td>`;
+      <td><span class="locationFull">${esc(r[7] || '')}</span></td>`;
     body.appendChild(tr);
   });
 
@@ -1997,7 +1996,6 @@ function render(rows, settings = {}){
     box.appendChild(more);
   }
 }
-
 
 const DAY_SHEETS = [
   'MONDAY ROUTES',
