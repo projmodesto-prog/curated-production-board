@@ -84,13 +84,14 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 /* ROUTE TABLE */
 #tableWrap{position:absolute;left:14px;right:14px;top:158px;height:704px;background:#edf1f2;border:1px solid #2b424c;border-radius:4px;overflow:hidden;z-index:3}
 #routeTable{width:100%;height:100%;border-collapse:collapse;table-layout:fixed;background:#f5f7f7;color:#111}
-#routeTable col:nth-child(1){width:9%}
-#routeTable col:nth-child(2){width:9%}
-#routeTable col:nth-child(3){width:13%}
-#routeTable col:nth-child(4){width:17%}
-#routeTable col:nth-child(5){width:16%}
-#routeTable col:nth-child(6){width:18%}
-#routeTable col:nth-child(7){width:18%}
+#routeTable col:nth-child(1){width:8%}
+#routeTable col:nth-child(2){width:8%}
+#routeTable col:nth-child(3){width:12%}
+#routeTable col:nth-child(4){width:16%}
+#routeTable col:nth-child(5){width:14%}
+#routeTable col:nth-child(6){width:17%}
+#routeTable col:nth-child(7){width:11%}
+#routeTable col:nth-child(8){width:14%}
 #routeTable thead{height:36px;background:#0a2029;color:white}
 #routeTable thead th{font-size:16px;padding:8px 9px;border-right:1px solid #35515c;border-bottom:2px solid #526a73;letter-spacing:.2px;text-align:center}
 #routeTable thead th:last-child{border-right:0}
@@ -460,14 +461,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   #routesBody tr td:nth-child(4){grid-column:1 / span 2;grid-row:2}
   #routesBody tr td:nth-child(5){grid-column:3;grid-row:2;border-right:0!important}
   #routesBody tr td:nth-child(7){grid-column:1;grid-row:3;border-bottom:0!important}
-  #routesBody tr td:nth-child(6){grid-column:2 / span 2;grid-row:3;border-right:0!important;border-bottom:0!important;padding-left:4px!important}
+  #routesBody tr td:nth-child(6){grid-column:2;grid-row:3;border-bottom:0!important;padding-left:4px!important}
+  #routesBody tr td:nth-child(8){grid-column:3;grid-row:3;border-right:0!important;border-bottom:0!important}
   #routesBody tr td:nth-child(1)::before{content:"TIME"}
   #routesBody tr td:nth-child(2)::before{content:"TRUCK"}
   #routesBody tr td:nth-child(3)::before{content:"DRIVER"}
   #routesBody tr td:nth-child(4)::before{content:"CREW"}
   #routesBody tr td:nth-child(5)::before{content:"CONTRACT"}
   #routesBody tr td:nth-child(6)::before{content:"LOCATION"}
-  #routesBody tr td:nth-child(7)::before{content:"NOTES"}
+  #routesBody tr td:nth-child(7)::before{content:"STATUS"}
+  #routesBody tr td:nth-child(8)::before{content:"NOTES"}
   .driverBadge{
     display:block!important;
     width:100%!important;
@@ -662,7 +665,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
     display:grid!important;
     width:100%!important;
     height:auto!important;
-    min-height:124px!important;
+    min-height:158px!important;
     max-height:none!important;
     flex:none!important;
     margin:0 0 7px!important;
@@ -673,7 +676,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
     box-shadow:0 2px 7px rgba(0,0,0,.18)!important;
     background:#f7f9fa!important;
     grid-template-columns:24% 24% 52%!important;
-    grid-template-rows:28px 30px 30px 36px!important;
+    grid-template-rows:28px 30px 30px 36px 34px!important;
   }
   #routesBody tr:last-child{margin-bottom:0!important}
   #routesBody tr:nth-child(even){background:#edf2f4!important}
@@ -712,7 +715,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
     white-space:nowrap!important;
   }
 
-  /* Row 1: TIME | TRUCK | TYPE */
+  /* Row 1: TIME | TRUCK | STATUS */
   #routesBody tr td:nth-child(1){grid-column:1;grid-row:1}
   #routesBody tr td:nth-child(2){grid-column:2;grid-row:1}
   #routesBody tr td:nth-child(7){grid-column:3;grid-row:1;border-right:0!important}
@@ -725,7 +728,10 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   #routesBody tr td:nth-child(4){grid-column:1 / span 3;grid-row:3;border-right:0!important}
 
   /* Row 4: LOCATION full width */
-  #routesBody tr td:nth-child(6){grid-column:1 / span 3;grid-row:4;border-right:0!important;border-bottom:0!important}
+  #routesBody tr td:nth-child(6){grid-column:1 / span 3;grid-row:4;border-right:0!important}
+
+  /* Row 5: NOTES full width */
+  #routesBody tr td:nth-child(8){grid-column:1 / span 3;grid-row:5;border-right:0!important;border-bottom:0!important}
 
   #routesBody tr td:nth-child(1)::before{content:"TIME"}
   #routesBody tr td:nth-child(2)::before{content:"TRUCK"}
@@ -733,7 +739,8 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   #routesBody tr td:nth-child(4)::before{content:"CREW"}
   #routesBody tr td:nth-child(5)::before{content:"CONTRACT"}
   #routesBody tr td:nth-child(6)::before{content:"LOCATION"}
-  #routesBody tr td:nth-child(7)::before{content:"TYPE"}
+  #routesBody tr td:nth-child(7)::before{content:"STATUS"}
+  #routesBody tr td:nth-child(8)::before{content:"NOTES"}
 
   .driverBadge{
     display:inline-block!important;
@@ -840,8 +847,8 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 
     <div id="tableWrap">
       <table id="routeTable">
-        <colgroup><col><col><col><col><col><col><col></colgroup>
-        <thead><tr><th>TIME</th><th>TRUCK</th><th>DRIVER</th><th>CREW</th><th>CONTRACT</th><th>LOCATION</th><th>NOTES</th></tr></thead>
+        <colgroup><col><col><col><col><col><col><col><col></colgroup>
+        <thead><tr><th>TIME</th><th>TRUCK</th><th>DRIVER</th><th>CREW</th><th>CONTRACT</th><th>LOCATION</th><th>STATUS</th><th>NOTES</th></tr></thead>
         <tbody id="routesBody"></tbody>
       </table>
     </div>
@@ -1962,6 +1969,7 @@ function render(rows, settings = {}){
       <td>${crewPills(r[3])}</td>
       <td><span class="contractFull">${esc(formatContracts(r[4]))}</span></td>
       <td><span class="locationFull">${esc(r[5])}</span></td>
+      <td>${routeStatusBadges(r[6])}</td>
       <td><span class="locationFull">${esc(r[7] || '')}</span></td>`;
     body.appendChild(tr);
   });
