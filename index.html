@@ -803,6 +803,134 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   .infoTicker{height:var(--m-ticker)!important}
 }
 
+
+
+/* V131 — WEEKLY SCHEDULE PORTRAIT DAY VIEW
+   Isolated to the weekly employee slide on portrait screens only.
+   Desktop / landscape / MVIX layouts remain exactly as before. */
+.weeklyMobileNav,.weeklyMobileDayTitle{display:none}
+
+@media (max-width:960px) and (orientation:portrait){
+  #weeklyScheduleSlide .weeklyMobileNav{
+    display:grid!important;
+    grid-template-columns:repeat(7,minmax(0,1fr))!important;
+    gap:3px!important;
+    width:100%!important;
+    height:38px!important;
+    margin:0 0 5px!important;
+    padding:3px!important;
+    border:1px solid #29414a!important;
+    border-radius:6px!important;
+    background:#07151b!important;
+  }
+  #weeklyScheduleSlide .weeklyMobileDayButton{
+    min-width:0!important;
+    height:30px!important;
+    margin:0!important;
+    padding:0 2px!important;
+    border:1px solid #38535e!important;
+    border-radius:4px!important;
+    background:#0a2029!important;
+    color:#dce7eb!important;
+    font:900 8.5px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:.25px!important;
+    text-align:center!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  #weeklyScheduleSlide .weeklyMobileDayButton.isToday{
+    border-color:#5aa2df!important;
+    box-shadow:inset 0 0 0 1px rgba(90,162,223,.35)!important;
+  }
+  #weeklyScheduleSlide .weeklyMobileDayButton.isActive{
+    background:#1773b8!important;
+    border-color:#6eb4ee!important;
+    color:#fff!important;
+  }
+  #weeklyScheduleSlide .weeklyMobileDayTitle{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    height:29px!important;
+    margin:0 0 5px!important;
+    padding:0 8px!important;
+    border:1px solid #36515c!important;
+    border-radius:5px!important;
+    background:#0a2029!important;
+    color:#fff!important;
+    font-size:11px!important;
+    line-height:1!important;
+    font-weight:950!important;
+    letter-spacing:.7px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  /* Only the weekly slide changes: Employee + Primary Job + one selected day. */
+  #weeklyScheduleSlide #weeklyScheduleTable{
+    width:100%!important;
+    height:calc(100% - 77px)!important;
+    min-width:0!important;
+    table-layout:fixed!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable col.mobileHidden,
+  #weeklyScheduleSlide #weeklyScheduleTable th.mobileHidden,
+  #weeklyScheduleSlide #weeklyScheduleTable td.mobileHidden{
+    display:none!important;
+    width:0!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable col.employeeCol{width:39%!important}
+  #weeklyScheduleSlide #weeklyScheduleTable col.jobCol{width:35%!important}
+  #weeklyScheduleSlide #weeklyScheduleTable col.mobileSelectedDay{width:26%!important}
+
+  #weeklyScheduleSlide #weeklyScheduleTable thead{height:38px!important}
+  #weeklyScheduleSlide #weeklyScheduleTable th{
+    height:38px!important;
+    padding:4px 5px!important;
+    font-size:10px!important;
+    line-height:1.03!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable th:first-child,
+  #weeklyScheduleSlide #weeklyScheduleTable th:nth-child(2){
+    padding-left:7px!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable th.mobileSelectedDay{
+    background:#1773b8!important;
+    color:#fff!important;
+    border-left:2px solid #5aa2df!important;
+    border-right:2px solid #5aa2df!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable td{
+    padding:3px 5px!important;
+    font-size:11px!important;
+    line-height:1.05!important;
+    white-space:pre-line!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable td:first-child{
+    padding-left:7px!important;
+    font-size:12px!important;
+    line-height:1.03!important;
+    font-weight:950!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable td:nth-child(2){
+    padding-left:7px!important;
+    font-size:9.5px!important;
+    line-height:1.03!important;
+    font-weight:850!important;
+  }
+  #weeklyScheduleSlide #weeklyScheduleTable td.mobileSelectedDay{
+    font-size:11.5px!important;
+    line-height:1.04!important;
+    font-weight:950!important;
+    border-left:2px solid #8dbbe0!important;
+    border-right:2px solid #8dbbe0!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2668,4 +2796,137 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 </script>
 
 <!-- V116 MESSAGE HIGHLIGHT + EMBEDDED PHOTO RELIABILITY FIX -->
+
+
+<script>
+/* V131 — WEEKLY SCHEDULE PORTRAIT DAY VIEW
+   Wraps the existing renderer; no route, MVIX, desktop, landscape, Sheet or timer logic is replaced. */
+(function(){
+  const baseRenderWeekly = window.renderWeeklyScheduleSlide;
+  if(typeof baseRenderWeekly !== 'function') return;
+
+  let mobileSelectedCol = null;
+  let latestWeeklyData = null;
+
+  function isPortraitWeeklyMobile(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  function mobileDayLabel(raw){
+    const text=String(raw||'').trim();
+    const m=text.match(/^(MON|TUE|WED|THU|FRI|SAT|SUN)/i);
+    return m ? m[1].toUpperCase() : text.slice(0,3).toUpperCase();
+  }
+
+  function mobileDayTitle(raw){
+    const text=String(raw||'').trim();
+    const dayMatch=text.match(/^(MON|TUE|WED|THU|FRI|SAT|SUN)/i);
+    const dateMatch=text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    const fullDays={MON:'MONDAY',TUE:'TUESDAY',WED:'WEDNESDAY',THU:'THURSDAY',FRI:'FRIDAY',SAT:'SATURDAY',SUN:'SUNDAY'};
+    const day=dayMatch ? fullDays[dayMatch[1].toUpperCase()] : '';
+    if(dateMatch){
+      const d=new Date(Number(dateMatch[3]),Number(dateMatch[1])-1,Number(dateMatch[2]));
+      const date=d.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
+      return (day ? day+' • ' : '') + date;
+    }
+    return text.toUpperCase();
+  }
+
+  function ensureWeeklyMobileControls(data){
+    const slide=document.getElementById('weeklyScheduleSlide');
+    const table=document.getElementById('weeklyScheduleTable');
+    if(!slide || !table || !data?.headers) return;
+
+    const host=table.parentElement;
+    if(!host) return;
+
+    let nav=document.getElementById('weeklyMobileNavV131');
+    if(!nav){
+      nav=document.createElement('div');
+      nav.id='weeklyMobileNavV131';
+      nav.className='weeklyMobileNav';
+      host.insertBefore(nav,table);
+    }
+
+    let title=document.getElementById('weeklyMobileDayTitleV131');
+    if(!title){
+      title=document.createElement('div');
+      title.id='weeklyMobileDayTitleV131';
+      title.className='weeklyMobileDayTitle';
+      host.insertBefore(title,table);
+    }
+
+    nav.innerHTML='';
+    for(let col=2; col<Math.min(9,data.headers.length); col++){
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='weeklyMobileDayButton';
+      b.dataset.col=String(col);
+      b.textContent=mobileDayLabel(data.headers[col]);
+      b.addEventListener('click',function(){
+        mobileSelectedCol=col;
+        applyWeeklyMobileDay(latestWeeklyData || data);
+      });
+      nav.appendChild(b);
+    }
+  }
+
+  function applyWeeklyMobileDay(data){
+    if(!data?.headers) return;
+    const table=document.getElementById('weeklyScheduleTable');
+    if(!table) return;
+
+    const firstDay=2;
+    const lastDay=Math.min(8,data.headers.length-1);
+    const todayCol=(typeof window.todayHeaderColumn==='function') ? window.todayHeaderColumn(data.headers) : -1;
+
+    if(mobileSelectedCol===null || mobileSelectedCol<firstDay || mobileSelectedCol>lastDay){
+      mobileSelectedCol=(todayCol>=firstDay && todayCol<=lastDay) ? todayCol : firstDay;
+    }
+
+    const cols=table.querySelectorAll('colgroup col');
+    cols.forEach((col,i)=>{
+      col.classList.toggle('mobileHidden',i>=firstDay && i!==mobileSelectedCol);
+      col.classList.toggle('mobileSelectedDay',i===mobileSelectedCol);
+    });
+
+    table.querySelectorAll('tr').forEach(tr=>{
+      Array.from(tr.children).forEach((cell,i)=>{
+        cell.classList.toggle('mobileHidden',i>=firstDay && i!==mobileSelectedCol);
+        cell.classList.toggle('mobileSelectedDay',i===mobileSelectedCol);
+      });
+    });
+
+    const nav=document.getElementById('weeklyMobileNavV131');
+    if(nav){
+      nav.querySelectorAll('.weeklyMobileDayButton').forEach(b=>{
+        const col=Number(b.dataset.col);
+        b.classList.toggle('isActive',col===mobileSelectedCol);
+        b.classList.toggle('isToday',col===todayCol);
+        b.setAttribute('aria-pressed',col===mobileSelectedCol?'true':'false');
+      });
+    }
+
+    const title=document.getElementById('weeklyMobileDayTitleV131');
+    if(title) title.textContent=mobileDayTitle(data.headers[mobileSelectedCol]||'');
+
+    table.dataset.mobileSelectedDay=String(mobileSelectedCol);
+  }
+
+  window.renderWeeklyScheduleSlide=function(data){
+    baseRenderWeekly(data);
+    latestWeeklyData=data;
+    ensureWeeklyMobileControls(data);
+    applyWeeklyMobileDay(data);
+  };
+
+  function refreshWeeklyMobileView(){
+    if(latestWeeklyData && isPortraitWeeklyMobile()) applyWeeklyMobileDay(latestWeeklyData);
+  }
+
+  window.addEventListener('resize',refreshWeeklyMobileView);
+  window.addEventListener('orientationchange',function(){setTimeout(refreshWeeklyMobileView,120)});
+})();
+</script>
+
 </body></html>
