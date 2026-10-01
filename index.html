@@ -1436,6 +1436,29 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V135 — IOS SEARCH ZOOM FIX
+   Safari auto-zooms form fields smaller than 16px. Keep both mobile search bars
+   at 16px so typing does not magnify the whole screen. Mobile portrait only. */
+@media (max-width:960px) and (orientation:portrait){
+  #mobileRouteSearchInputV133,
+  #weeklyScheduleSearchInputV134{
+    font-size:16px!important;
+    line-height:1.15!important;
+  }
+
+  #mobileRouteSearchInputV133{
+    height:32px!important;
+    padding:0 9px!important;
+  }
+
+  #weeklyScheduleSearchInputV134{
+    height:30px!important;
+    padding:0 8px!important;
+  }
+}
+
 </style>
 </head>
 <body>
