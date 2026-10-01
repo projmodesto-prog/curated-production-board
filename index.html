@@ -4935,6 +4935,14 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   let selectedUserV142='';
   let heartbeatV142=null;
   let configTimerV142=null;
+  let pendingVisitV142=false;
+  let visitEventV142='';
+  let visitBusyV142=false;
+  function queueVisitV142(){
+    pendingVisitV142=true;
+    visitEventV142=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    sendTrackingV142('visit');
+  }
 
   function isMobileV142(){
     return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
@@ -5006,7 +5014,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       const candidate=cleanV142(row?.[1]);
       if(/^https:\/\/script\.google\.com\/macros\/s\//i.test(candidate)){
         endpointV142=candidate;
-        if(selectedUserV142) sendTrackingV142('ping');
+        if(selectedUserV142) sendTrackingV142(pendingVisitV142?'visit':'ping');
       }
     }catch(e){}
     return endpointV142;
@@ -5014,21 +5022,30 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
   function sendTrackingV142(action){
     if(!isMobileV142() || !selectedUserV142 || !endpointV142) return;
+    if(pendingVisitV142) action='visit';
+    if(action==='visit' && visitBusyV142) return;
+    if(action==='visit') visitBusyV142=true;
+    const sentEvent=visitEventV142;
     const cb='__curatedMobileUser_'+Date.now()+'_'+Math.floor(Math.random()*99999);
     const script=document.createElement('script');
     let finished=false;
     const cleanup=()=>{
       if(finished) return;
       finished=true;
+      if(action==='visit') visitBusyV142=false;
       try{delete window[cb]}catch(e){}
       try{script.remove()}catch(e){}
     };
-    window[cb]=function(){cleanup()};
+    window[cb]=function(result){
+      if(result?.ok && action==='visit' && visitEventV142===sentEvent) pendingVisitV142=false;
+      cleanup();
+    };
     const params=new URLSearchParams({
       callback:cb,
       name:selectedUserV142,
       device:getDeviceIdV142(),
       action:String(action||'ping'),
+      event:sentEvent,
       page:currentPageV142(),
       t:String(Date.now())
     });
@@ -5101,7 +5118,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
         if(overlay) overlay.hidden=true;
         const search=document.getElementById('mobileUserSearchV142');
         if(search) search.value='';
-        sendTrackingV142('visit');
+        queueVisitV142();
         startHeartbeatV142();
       });
     });
@@ -5160,6 +5177,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     clearInterval(configTimerV142);
     configTimerV142=setInterval(()=>{
       if(!endpointV142) refreshEndpointV142();
+      else if(pendingVisitV142) sendTrackingV142('visit');
     },60000);
   }
 
