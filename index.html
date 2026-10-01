@@ -3368,6 +3368,21 @@ setTimeout(fitBoardV100, 750);
 setTimeout(fitBoardV100, 1500);
 setTimeout(fitBoardV100, 3000);
 
+/* V141 — EMBEDDED MOBILE LIGHT STARTUP + EMPLOYEE TOGGLE
+   Detect in-app/mobile webviews (including ChatGPT-style internal browsers) so
+   route data gets priority before secondary Google Sheet requests. */
+function isEmbeddedMobileV141(){
+  const ua=String(navigator.userAgent||'');
+  const ref=String(document.referrer||'');
+  const ios=/iPhone|iPad|iPod/i.test(ua);
+  const namedEmbedded=/ChatGPT|FBAN|FBAV|Instagram|Line\//i.test(ua);
+  const knownFullBrowser=/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua) ||
+    (/Version\/[\d.]+.*Safari/i.test(ua) && !namedEmbedded);
+  const refEmbedded=/chatgpt\.com|chat\.openai\.com/i.test(ref);
+  return !!(namedEmbedded || refEmbedded || (ios && !knownFullBrowser));
+}
+window.__embeddedMobileV141=isEmbeddedMobileV141();
+
 tick();
 setInterval(tick,1000);
 renderTrafficFallback();
@@ -3377,15 +3392,19 @@ if(!renderCachedSheetWeather()) renderWeatherUnavailable();
 ensureWeatherVisible();
 setInterval(ensureWeatherVisible,2000);
 startDayRotation();
-setTimeout(refreshEmployeeDisplaySettings,200);
+
+/* V141: in embedded webviews, let the route request finish first.
+   Normal Safari/Chrome/MVIX keep the original fast startup timings. */
+const embeddedDelayV141=window.__embeddedMobileV141;
+setTimeout(refreshEmployeeDisplaySettings,embeddedDelayV141?5200:200);
 setInterval(refreshEmployeeDisplaySettings,EMPLOYEE_SETTINGS_REFRESH_MS);
-setTimeout(refreshEmployeeSlidesData,450);
+setTimeout(refreshEmployeeSlidesData,embeddedDelayV141?7200:450);
 setInterval(refreshEmployeeSlidesData,EMPLOYEE_SLIDE_REFRESH_MS);
-setTimeout(refreshWeatherFromSheet,180);
+setTimeout(refreshWeatherFromSheet,embeddedDelayV141?2400:180);
 setInterval(refreshWeatherFromSheet,WEATHER_SHEET_REFRESH_MS);
-setTimeout(refreshTrafficData,250);
+setTimeout(refreshTrafficData,embeddedDelayV141?4200:250);
 setInterval(refreshTrafficData,60000);
-setTimeout(refreshMessageBar,350);
+setTimeout(refreshMessageBar,embeddedDelayV141?4600:350);
 setInterval(refreshMessageBar,MESSAGE_REFRESH_MS);
 
 /* Improve generated status colors without changing Google Sheet structure */
@@ -3559,7 +3578,11 @@ async function refreshInstallationPhotos(){
 }
 try{localStorage.removeItem('mvix_install_photos')}catch(e){}
 try{localStorage.removeItem('mvix_install_photos_v113')}catch(e){}
-refreshInstallationPhotos();
+if(window.__embeddedMobileV141){
+  setTimeout(refreshInstallationPhotos,9000);
+}else{
+  refreshInstallationPhotos();
+}
 setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 </script>
 
@@ -4328,6 +4351,14 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       const name=String(cell.textContent||'').trim();
       if(!name) return;
 
+      /* V141: tap the selected employee a second time to return to the full schedule. */
+      const alreadySelected=weeklyInput &&
+        normalizeV136(weeklyInput.value)===normalizeV136(name);
+      if(alreadySelected){
+        clearWeeklyPersonV136(false);
+        return;
+      }
+
       if(weeklyInput){
         weeklyInput.value=name;
         weeklyInput.blur();
@@ -4534,11 +4565,25 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     if(routeAvailabilityBusyV138 || typeof DAY_SHEETS==='undefined' || typeof fetchSheet!=='function') return;
     routeAvailabilityBusyV138=true;
     try{
-      const settled=await Promise.allSettled(
-        DAY_SHEETS.map((name,idx)=>
-          fetchSheet(name,1).then(data=>({idx,data}))
-        )
-      );
+      let settled;
+      if(window.__embeddedMobileV141){
+        settled=[];
+        for(let idx=0; idx<DAY_SHEETS.length; idx++){
+          try{
+            const data=await fetchSheet(DAY_SHEETS[idx],1);
+            settled.push({status:'fulfilled',value:{idx,data}});
+          }catch(error){
+            settled.push({status:'rejected',reason:error});
+          }
+          await new Promise(r=>setTimeout(r,80));
+        }
+      }else{
+        settled=await Promise.allSettled(
+          DAY_SHEETS.map((name,idx)=>
+            fetchSheet(name,1).then(data=>({idx,data}))
+          )
+        );
+      }
 
       const enabledCandidatesV140=[];
       settled.forEach(result=>{
@@ -4677,7 +4722,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   /* Re-check when opening/rotating and when SHOW DAY values change in Sheets. */
   /* V140: let the primary route loader go first; the previous 250ms seven-day
      request burst could compete with startup on mobile Chrome. */
-  setTimeout(refreshRouteAvailabilityV138,3500);
+  setTimeout(refreshRouteAvailabilityV138,window.__embeddedMobileV141?9000:3500);
   setInterval(refreshRouteAvailabilityV138,30000);
 
   window.addEventListener('resize',function(){
