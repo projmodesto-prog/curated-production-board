@@ -1459,6 +1459,90 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V136 — MOBILE SCHEDULE DIRECT ACCESS + TAP EMPLOYEE
+   Portrait-phone interaction only. MVIX / desktop / landscape remain unchanged. */
+@media (max-width:960px) and (orientation:portrait){
+  /* ROUTES toolbar: Search | TODAY | SCHEDULE | clear */
+  #tableWrap .mobileRouteSearchV133{
+    grid-template-columns:minmax(0,1fr) auto auto auto!important;
+  }
+  #mobileRouteScheduleV136{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    height:30px!important;
+    min-width:66px!important;
+    margin:0!important;
+    padding:0 7px!important;
+    border:1px solid #4f7382!important;
+    border-radius:7px!important;
+    background:#0f2d38!important;
+    color:#fff!important;
+    font:950 7.7px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:.25px!important;
+    white-space:nowrap!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  #mobileRouteScheduleV136:active{
+    background:#1773b8!important;
+  }
+
+  /* Weekly schedule toolbar: search + ALL + ROUTES. The seven day buttons remain directly below. */
+  #weeklyScheduleTodayV134{
+    display:none!important;
+  }
+  #weeklyScheduleSlide .mobileScheduleSearchV134{
+    grid-template-columns:minmax(0,1fr) auto auto auto!important;
+  }
+  #weeklyScheduleAllV136,
+  #weeklyScheduleRoutesV136{
+    height:29px!important;
+    margin:0!important;
+    padding:0 7px!important;
+    border:1px solid #4f7382!important;
+    border-radius:6px!important;
+    background:#123544!important;
+    color:#fff!important;
+    font:950 7.2px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:.3px!important;
+    white-space:nowrap!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  #weeklyScheduleAllV136{
+    min-width:34px!important;
+  }
+  #weeklyScheduleRoutesV136{
+    min-width:48px!important;
+    background:#0f2d38!important;
+  }
+
+  /* Employee names become tappable personal-schedule selectors. */
+  #weeklyScheduleTable tbody td:first-child{
+    cursor:pointer!important;
+    text-decoration-thickness:1px!important;
+    text-underline-offset:2px!important;
+  }
+  #weeklyScheduleTable tbody td:first-child:active{
+    background:rgba(90,162,223,.22)!important;
+  }
+  #weeklyScheduleTable tbody tr.mobileSchedulePersonalV134 td:first-child{
+    text-decoration:underline!important;
+    text-decoration-color:#5aa2df!important;
+  }
+
+  /* Make the seven day selector a little more obvious as the primary schedule navigation. */
+  #weeklyScheduleSlide .weeklyMobileNav{
+    box-shadow:0 1px 0 rgba(255,255,255,.03)!important;
+  }
+  #weeklyScheduleSlide .weeklyMobileDayButton{
+    font-size:9px!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3924,6 +4008,202 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   }
   window.addEventListener('resize',syncV134);
   window.addEventListener('orientationchange',function(){setTimeout(syncV134,140)});
+})();
+</script>
+
+
+
+<script>
+/* V136 — MOBILE SCHEDULE DIRECT ACCESS + TAP EMPLOYEE
+   - Tap an employee name to isolate that person's schedule.
+   - Seven day buttons remain the schedule navigator.
+   - ALL returns to every employee.
+   - SCHEDULE opens the weekly schedule directly from Routes.
+   - ROUTES returns to the current route board. */
+(function(){
+  function isPortraitMobileV136(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  const routeToolbar=document.getElementById('mobileRouteSearchV133');
+  const routeToday=document.getElementById('mobileRouteTodayV134');
+  const routeClear=document.getElementById('mobileRouteSearchClearV133');
+  const routeInput=document.getElementById('mobileRouteSearchInputV133');
+
+  const weeklySlide=document.getElementById('weeklyScheduleSlide');
+  const weeklySearch=document.getElementById('weeklyScheduleSearchV134');
+  const weeklyInput=document.getElementById('weeklyScheduleSearchInputV134');
+  const weeklyClear=document.getElementById('weeklyScheduleClearV134');
+  const weeklyBody=document.getElementById('weeklyScheduleBody');
+
+  let manualWeeklyV136=false;
+
+  function normalizeV136(value){
+    let s=String(value||'').toLowerCase();
+    try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}
+    return s.trim();
+  }
+
+  function applyWeeklyEmployeeFilterV136(){
+    if(!isPortraitMobileV136() || !weeklyBody) return;
+    const q=normalizeV136(weeklyInput?.value||'');
+    Array.from(weeklyBody.querySelectorAll(':scope > tr')).forEach(tr=>{
+      const name=normalizeV136(tr.cells?.[0]?.textContent||'');
+      const match=!q || name.includes(q);
+      tr.classList.toggle('mobileScheduleFilteredOutV134',!match);
+      tr.classList.toggle('mobileSchedulePersonalV134',!!q && match);
+    });
+  }
+
+  function clearWeeklyPersonV136(focus){
+    if(weeklyInput) weeklyInput.value='';
+    applyWeeklyEmployeeFilterV136();
+    if(focus && weeklyInput) weeklyInput.focus();
+    const host=weeklySlide?.querySelector('.extraSlideBody');
+    if(host) host.scrollTop=0;
+  }
+
+  function resumeRoutesV136(){
+    manualWeeklyV136=false;
+    document.body.classList.remove('manualWeeklyV136');
+    try{ hideExtraSlides(); }catch(e){}
+    try{ activeExtraSlide=''; }catch(e){}
+
+    if(typeof activeDayData!=='undefined' && activeDayData){
+      try{
+        currentSlideSeconds=(typeof getSlideSeconds==='function')
+          ? getSlideSeconds(activeDayData.settings||{})
+          : 8;
+        countdownRemaining=currentSlideSeconds;
+        slideDeadlineMs=Date.now()+(currentSlideSeconds*1000);
+        nextVisibleLabel='--';
+        if(typeof updateTimerText==='function') updateTimerText();
+        if(typeof scheduleRotation==='function') scheduleRotation();
+        if(typeof updateNextVisibleLabel==='function') updateNextVisibleLabel();
+      }catch(e){}
+    }
+  }
+
+  async function openWeeklyScheduleV136(){
+    if(!isPortraitMobileV136()) return;
+
+    try{ clearTimeout(rotationTimeout); }catch(e){}
+    try{ await refreshEmployeeSlidesData(); }catch(e){}
+
+    if(typeof weeklyScheduleData!=='undefined' && weeklyScheduleData && typeof renderWeeklyScheduleSlide==='function'){
+      try{ renderWeeklyScheduleSlide(weeklyScheduleData); }catch(e){}
+    }
+
+    manualWeeklyV136=true;
+    document.body.classList.add('manualWeeklyV136');
+    try{ setExtraSlideActive('weeklyScheduleSlide'); }catch(e){ return; }
+
+    try{
+      nextVisibleLabel='ROUTES';
+      countdownRemaining=0;
+      slideDeadlineMs=0;
+      if(typeof updateTimerText==='function') updateTimerText();
+    }catch(e){}
+
+    const host=weeklySlide?.querySelector('.extraSlideBody');
+    if(host) host.scrollTop=0;
+  }
+
+  /* Add direct SCHEDULE button beside TODAY on the mobile Routes screen. */
+  if(routeToolbar && !document.getElementById('mobileRouteScheduleV136')){
+    const scheduleBtn=document.createElement('button');
+    scheduleBtn.id='mobileRouteScheduleV136';
+    scheduleBtn.type='button';
+    scheduleBtn.textContent='SCHEDULE';
+    scheduleBtn.setAttribute('aria-label','Open weekly employee schedule');
+    routeToolbar.insertBefore(scheduleBtn,routeClear || null);
+
+    scheduleBtn.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openWeeklyScheduleV136();
+    });
+  }
+
+  /* Weekly toolbar: hide TODAY, use the existing seven day bar, and add ALL + ROUTES. */
+  if(weeklySearch && !document.getElementById('weeklyScheduleAllV136')){
+    const allBtn=document.createElement('button');
+    allBtn.id='weeklyScheduleAllV136';
+    allBtn.type='button';
+    allBtn.textContent='ALL';
+    allBtn.setAttribute('aria-label','Show all employees');
+
+    const routesBtn=document.createElement('button');
+    routesBtn.id='weeklyScheduleRoutesV136';
+    routesBtn.type='button';
+    routesBtn.textContent='ROUTES';
+    routesBtn.setAttribute('aria-label','Return to routes');
+
+    if(weeklyClear){
+      weeklySearch.insertBefore(allBtn,weeklyClear);
+      weeklySearch.insertBefore(routesBtn,weeklyClear);
+    }else{
+      weeklySearch.appendChild(allBtn);
+      weeklySearch.appendChild(routesBtn);
+    }
+
+    allBtn.addEventListener('click',function(e){
+      e.preventDefault();
+      clearWeeklyPersonV136(false);
+    });
+
+    routesBtn.addEventListener('click',function(e){
+      e.preventDefault();
+      resumeRoutesV136();
+    });
+  }
+
+  /* Tap only the employee-name cell to enter that person's schedule. */
+  if(weeklyBody && weeklyBody.dataset.tapEmployeeV136!=='1'){
+    weeklyBody.dataset.tapEmployeeV136='1';
+    weeklyBody.addEventListener('click',function(e){
+      if(!isPortraitMobileV136()) return;
+      const cell=e.target.closest('td');
+      const row=e.target.closest('tr');
+      if(!cell || !row || row.parentElement!==weeklyBody) return;
+      if(cell.cellIndex!==0) return;
+
+      const name=String(cell.textContent||'').trim();
+      if(!name) return;
+
+      if(weeklyInput){
+        weeklyInput.value=name;
+        weeklyInput.blur();
+      }
+      applyWeeklyEmployeeFilterV136();
+
+      const host=weeklySlide?.querySelector('.extraSlideBody');
+      if(host){
+        requestAnimationFrame(()=>{
+          const nav=document.getElementById('weeklyMobileNavV131');
+          const top=(nav?.offsetTop||0);
+          host.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+        });
+      }
+    });
+  }
+
+  /* Keep the direct filter in sync after live schedule refreshes. */
+  if(weeklyInput){
+    weeklyInput.addEventListener('input',applyWeeklyEmployeeFilterV136);
+    weeklyInput.addEventListener('search',applyWeeklyEmployeeFilterV136);
+  }
+  if(weeklyClear){
+    weeklyClear.addEventListener('click',function(){
+      setTimeout(()=>applyWeeklyEmployeeFilterV136(),0);
+    });
+  }
+
+  window.addEventListener('orientationchange',function(){
+    setTimeout(()=>{
+      if(!isPortraitMobileV136() && manualWeeklyV136) resumeRoutesV136();
+    },150);
+  });
 })();
 </script>
 
