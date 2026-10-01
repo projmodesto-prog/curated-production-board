@@ -1706,7 +1706,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 .mobileUserOverlayV142,
 .mobileUserButtonV142{display:none}
 
-@media (max-width:960px) and (orientation:portrait){
+@media (max-width:960px){
   #tableWrap .mobileRouteSearchV133{
     grid-template-columns:minmax(0,1fr) auto auto auto!important;
   }
@@ -1833,6 +1833,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+@media(max-width:960px){.mobileUserCardV142{overflow-y:auto!important}.mobileUserHeadV142,#mobileRegistrationForm,.mobileUserFootV142{flex-shrink:0}.mobileUserListV142{min-height:80px!important;max-height:25vh!important;flex-shrink:0}#mobileRegistrationForm button{text-align:center!important;background:#a9e8c4!important;color:#102418!important}}
 </style>
 </head>
 <body>
@@ -4920,282 +4921,80 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
 
 <script>
-/* V142 — MOBILE USER REGISTRATION + USAGE TRACKING
-   First mobile visit asks the employee to identify themselves. The device remembers
-   that choice. Once the Apps Script URL is placed in MOBILE USERS SETUP!B3, visits
-   and 60-second heartbeats are written to the MOBILE USERS tab automatically. */
+/* V143: employee + phone registration; private phone storage through Apps Script. */
 (function(){
-  const EMPLOYEE_GID_V142='1987654321';
-  const MOBILE_SETUP_GID_V142='1987654351';
-  const USER_KEY_V142='curated_mobile_user_v142';
-  const DEVICE_KEY_V142='curated_mobile_device_v142';
-
-  let endpointV142='';
-  let employeesV142=[];
-  let selectedUserV142='';
-  let heartbeatV142=null;
-  let configTimerV142=null;
-  let pendingVisitV142=false;
-  let visitEventV142='';
-  let visitBusyV142=false;
-  function queueVisitV142(){
-    pendingVisitV142=true;
-    visitEventV142=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-    sendTrackingV142('visit');
-  }
-
-  function isMobileV142(){
-    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
-  }
-
-  function cleanV142(v){ return String(v||'').trim(); }
-  function normV142(v){
-    let s=cleanV142(v).toLowerCase();
-    try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}
-    return s;
-  }
-
-  function getDeviceIdV142(){
+  const USER='curated_mobile_user_v142', PHONE='curated_mobile_phone_v143', DEVICE='curated_mobile_device_v142';
+  const mobile=()=>window.matchMedia('(max-width: 960px)').matches;
+  const clean=v=>String(v||'').trim();
+  const normalize=v=>clean(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const read=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+  const write=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  const phoneNumber=v=>{const n=String(v||'').replace(/\D/g,'');return n.length===10?'+1'+n:n.length===11&&n[0]==='1'?'+'+n:''};
+  let device=read(DEVICE)||('dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));write(DEVICE,device);
+  let name=read(USER), phone=read(PHONE), employees=[], endpoint='', pending=true, busy=false, booted=false, activeName='';
+  let event=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+  function page(){return document.getElementById('weeklyScheduleSlide')?.classList.contains('isActive')?'schedule':document.getElementById('todayCrewSlide')?.classList.contains('isActive')?'crew':'routes'}
+  function status(text){const el=document.getElementById('mobileRegistrationStatus');if(el)el.textContent=text;}
+  function ack(id){return new Promise(resolve=>{
+    const cb='__curatedAck_'+Date.now()+'_'+Math.floor(Math.random()*1e6), script=document.createElement('script');
+    const done=result=>{clearTimeout(timer);delete window[cb];script.remove();resolve(!!result?.ok)};
+    const timer=setTimeout(()=>done(null),10000);window[cb]=done;script.onerror=()=>done(null);
+    script.src=endpoint+'?'+new URLSearchParams({action:'ack',event:id,callback:cb});document.head.appendChild(script);
+  });}
+  async function send(){
+    if(!mobile()||!name||!phone||!endpoint||busy)return;
+    busy=true;const visit=pending, id=visit?event:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
     try{
-      let id=localStorage.getItem(DEVICE_KEY_V142);
-      if(id) return id;
-      if(window.crypto?.randomUUID) id=crypto.randomUUID();
-      else id='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
-      localStorage.setItem(DEVICE_KEY_V142,id);
-      return id;
-    }catch(e){
-      return 'session-'+Math.random().toString(36).slice(2,10);
-    }
+      const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),12000);
+      try{await fetch(endpoint,{method:'POST',mode:'no-cors',credentials:'omit',signal:controller.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({name,phone:visit?phone:'',device,action:visit?'visit':'ping',event:id,page:page()})});}catch(e){}finally{clearTimeout(timeout);}
+      if(await ack(id)){
+        if(visit&&event===id)pending=false;
+        status('Registered / Registrado');
+        const button=document.getElementById('mobileUserButtonV142');if(button)button.title=name+' • Registered / Registrado';
+      }else status('Connection pending. We will retry. / Conexión pendiente. Reintentaremos.');
+    }catch(e){status('Connection pending. We will retry. / Conexión pendiente. Reintentaremos.');}
+    finally{busy=false;}
   }
-
-  function currentPageV142(){
-    const weekly=document.getElementById('weeklyScheduleSlide');
-    const crew=document.getElementById('todayCrewSlide');
-    if(weekly?.classList.contains('isActive')) return 'schedule';
-    if(crew?.classList.contains('isActive')) return 'crew';
-    return 'routes';
-  }
-
-  function readSavedUserV142(){
-    try{return cleanV142(localStorage.getItem(USER_KEY_V142)||'')}catch(e){return ''}
-  }
-
-  function saveUserV142(name){
-    selectedUserV142=cleanV142(name);
-    try{localStorage.setItem(USER_KEY_V142,selectedUserV142)}catch(e){}
-    updateUserButtonV142();
-  }
-
-  function clearUserV142(){
-    selectedUserV142='';
-    try{localStorage.removeItem(USER_KEY_V142)}catch(e){}
-    updateUserButtonV142();
-  }
-
-  async function fetchEmployeesV142(){
+  async function config(){
     try{
-      if(typeof fetchExtraSheetOnce!=='function') throw new Error('sheet helper unavailable');
-      const rows=await fetchExtraSheetOnce(EMPLOYEE_GID_V142,'A1:A100',1);
-      const names=rows.slice(1).map(r=>cleanV142(r?.[0])).filter(Boolean);
-      employeesV142=[...new Set(names)];
-    }catch(e){
-      const fallback=(window.weeklyScheduleData?.rows||[]).map(r=>cleanV142(r?.[0])).filter(Boolean);
-      employeesV142=[...new Set(fallback)];
-    }
-    employeesV142.sort((a,b)=>a.localeCompare(b));
-    return employeesV142;
-  }
-
-  async function refreshEndpointV142(){
-    try{
-      if(typeof fetchExtraSheetOnce!=='function') return endpointV142;
-      const rows=await fetchExtraSheetOnce(MOBILE_SETUP_GID_V142,'A1:B6',2);
-      const row=rows.find(r=>/^WEB APP URL/i.test(cleanV142(r?.[0])));
-      const candidate=cleanV142(row?.[1]);
-      if(/^https:\/\/script\.google\.com\/macros\/s\//i.test(candidate)){
-        endpointV142=candidate;
-        if(selectedUserV142) sendTrackingV142(pendingVisitV142?'visit':'ping');
-      }
+      const rows=await fetchExtraSheetOnce('1987654351','A1:B6',2);
+      const candidate=clean(rows.find(r=>/^WEB APP URL/i.test(clean(r[0])))?.[1]);
+      if(/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(candidate)){endpoint=candidate;send();}
     }catch(e){}
-    return endpointV142;
   }
-
-  function sendTrackingV142(action){
-    if(!isMobileV142() || !selectedUserV142 || !endpointV142) return;
-    if(pendingVisitV142) action='visit';
-    if(action==='visit' && visitBusyV142) return;
-    if(action==='visit') visitBusyV142=true;
-    const sentEvent=visitEventV142;
-    const cb='__curatedMobileUser_'+Date.now()+'_'+Math.floor(Math.random()*99999);
-    const script=document.createElement('script');
-    let finished=false;
-    const cleanup=()=>{
-      if(finished) return;
-      finished=true;
-      if(action==='visit') visitBusyV142=false;
-      try{delete window[cb]}catch(e){}
-      try{script.remove()}catch(e){}
-    };
-    window[cb]=function(result){
-      if(result?.ok && action==='visit' && visitEventV142===sentEvent) pendingVisitV142=false;
-      cleanup();
-    };
-    const params=new URLSearchParams({
-      callback:cb,
-      name:selectedUserV142,
-      device:getDeviceIdV142(),
-      action:String(action||'ping'),
-      event:sentEvent,
-      page:currentPageV142(),
-      t:String(Date.now())
-    });
-    script.src=endpointV142+(endpointV142.includes('?')?'&':'?')+params.toString();
-    script.onerror=cleanup;
-    document.head.appendChild(script);
-    setTimeout(cleanup,8000);
+  async function roster(){
+    try{const rows=await fetchExtraSheetOnce('1987654321','A1:A200',1);employees=[...new Set(rows.slice(1).map(r=>clean(r[0])).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
+    catch(e){employees=[];}
+    renderNames();
   }
-
-  function startHeartbeatV142(){
-    clearInterval(heartbeatV142);
-    if(!selectedUserV142) return;
-    heartbeatV142=setInterval(()=>{
-      if(!document.hidden) sendTrackingV142('ping');
-    },60000);
+  function overlay(){
+    let el=document.getElementById('mobileUserOverlayV142');if(el)return el;
+    el=document.createElement('div');el.id='mobileUserOverlayV142';el.className='mobileUserOverlayV142';el.hidden=true;
+    el.innerHTML='<div class="mobileUserCardV142" role="dialog" aria-modal="true" aria-labelledby="mobileRegistrationTitle"><div class="mobileUserHeadV142"><div class="mobileUserBrandV142">CURATED EVENTS • NASHVILLE</div><div class="mobileUserTitleV142" id="mobileRegistrationTitle">Employee registration / Registro de empleado</div><div class="mobileUserSubtitleV142">Choose your name and enter your phone once. / Selecciona tu nombre e ingresa tu teléfono una vez.</div></div><input id="mobileUserSearchV142" type="search" placeholder="Search your name / Busca tu nombre" autocomplete="off"><div id="mobileUserListV142" class="mobileUserListV142"></div><form id="mobileRegistrationForm" style="padding:16px"><div id="mobileSelectedEmployee" style="font-weight:bold;margin-bottom:12px"></div><label for="mobilePhoneV143">Phone number / Número de teléfono</label><input id="mobilePhoneV143" type="tel" autocomplete="tel" inputmode="tel" required maxlength="25" placeholder="(615) 555-0123" style="display:block;width:100%;font-size:18px;padding:12px;margin:8px 0 14px;border-radius:8px;border:1px solid #678;background:#fff;color:#111"><button type="submit" class="mobileUserNameV142" style="width:100%;background:#a9e8c4;color:#102418">Enter / Entrar</button><div id="mobileRegistrationStatus" role="status" aria-live="polite" style="margin-top:12px;font-size:14px"></div></form><div class="mobileUserFootV142">Name, phone and visits are recorded for internal use. This device remembers your registration. / Guardamos nombre, teléfono y visitas para uso interno. Este dispositivo recuerda tu registro.</div></div>';
+    document.body.appendChild(el);
+    document.getElementById('mobileUserSearchV142').addEventListener('input',renderNames);
+    document.getElementById('mobileRegistrationForm').addEventListener('submit',e=>{
+      e.preventDefault();const entered=phoneNumber(document.getElementById('mobilePhoneV143').value);
+      if(!activeName){status('Select your name. / Selecciona tu nombre.');return;}
+      if(!entered){status('Enter a valid 10-digit US phone number. / Ingresa un teléfono válido de 10 dígitos.');return;}
+      name=activeName;phone=entered;write(USER,name);write(PHONE,phone);pending=true;event=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+      el.hidden=true;send();updateButton();
+    });return el;
   }
-
-  function ensureOverlayV142(){
-    let overlay=document.getElementById('mobileUserOverlayV142');
-    if(overlay) return overlay;
-
-    overlay=document.createElement('div');
-    overlay.id='mobileUserOverlayV142';
-    overlay.className='mobileUserOverlayV142';
-    overlay.hidden=true;
-    overlay.innerHTML=
-      '<div class="mobileUserCardV142" role="dialog" aria-modal="true" aria-labelledby="mobileUserTitleV142">'+
-        '<div class="mobileUserHeadV142">'+
-          '<div class="mobileUserBrandV142">CURATED EVENTS • NASHVILLE</div>'+
-          '<div class="mobileUserTitleV142" id="mobileUserTitleV142">Who are you? / ¿Quién eres?</div>'+
-          '<div class="mobileUserSubtitleV142">Select your name once. This device will remember you and record usage of the mobile route screen.</div>'+
-        '</div>'+
-        '<input id="mobileUserSearchV142" type="search" autocomplete="off" spellcheck="false" placeholder="Search your name / Busca tu nombre">'+
-        '<div class="mobileUserListV142" id="mobileUserListV142"></div>'+
-        '<div class="mobileUserFootV142">Used only to record access to this internal production route and schedule screen.</div>'+
-      '</div>';
-    document.body.appendChild(overlay);
-
-    const search=document.getElementById('mobileUserSearchV142');
-    search?.addEventListener('input',renderNamesV142);
-    return overlay;
+  function renderNames(){
+    const list=document.getElementById('mobileUserListV142');if(!list)return;
+    list.replaceChildren();const q=normalize(document.getElementById('mobileUserSearchV142').value);
+    const shown=employees.filter(n=>normalize(n).includes(q));
+    if(!shown.length){const msg=document.createElement('div');msg.className='mobileUserEmptyV142';msg.textContent=employees.length?'No employee found. / No se encontró el empleado.':'Loading employees. Try again shortly. / Cargando empleados. Intenta en un momento.';list.appendChild(msg);}
+    shown.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='mobileUserNameV142'+(n===activeName?' isCurrentV142':'');b.textContent=n;b.onclick=()=>{activeName=n;document.getElementById('mobileSelectedEmployee').textContent=n;renderNames();document.getElementById('mobilePhoneV143').focus()};list.appendChild(b)});
   }
-
-  function renderNamesV142(){
-    const list=document.getElementById('mobileUserListV142');
-    const search=document.getElementById('mobileUserSearchV142');
-    if(!list) return;
-
-    const q=normV142(search?.value||'');
-    const shown=employeesV142.filter(name=>!q || normV142(name).includes(q));
-    if(!shown.length){
-      list.innerHTML='<div class="mobileUserEmptyV142">No employee found. / No se encontró el empleado.</div>';
-      return;
-    }
-
-    list.innerHTML=shown.map(name=>
-      '<button type="button" class="mobileUserNameV142'+
-      (normV142(name)===normV142(selectedUserV142)?' isCurrentV142':'')+
-      '" data-name="'+String(name).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+'">'+
-      String(name).replace(/&/g,'&amp;').replace(/</g,'&lt;')+
-      '</button>'
-    ).join('');
-
-    list.querySelectorAll('.mobileUserNameV142').forEach(btn=>{
-      btn.addEventListener('click',function(){
-        const name=cleanV142(btn.dataset.name);
-        if(!name) return;
-        saveUserV142(name);
-        const overlay=document.getElementById('mobileUserOverlayV142');
-        if(overlay) overlay.hidden=true;
-        const search=document.getElementById('mobileUserSearchV142');
-        if(search) search.value='';
-        queueVisitV142();
-        startHeartbeatV142();
-      });
-    });
-  }
-
-  async function openUserPickerV142(){
-    if(!isMobileV142()) return;
-    const overlay=ensureOverlayV142();
-    if(!employeesV142.length) await fetchEmployeesV142();
-    renderNamesV142();
-    overlay.hidden=false;
-    setTimeout(()=>document.getElementById('mobileUserSearchV142')?.focus(),80);
-  }
-
-  function updateUserButtonV142(){
-    const btn=document.getElementById('mobileUserButtonV142');
-    if(!btn) return;
-    btn.title=selectedUserV142 ? ('Current user: '+selectedUserV142) : 'Choose user';
-    btn.setAttribute('aria-label',selectedUserV142 ? ('Change user. Current user '+selectedUserV142) : 'Choose user');
-  }
-
-  function ensureUserButtonV142(){
-    const toolbar=document.getElementById('mobileRouteSearchV133');
-    const clear=document.getElementById('mobileRouteSearchClearV133');
-    if(!toolbar || document.getElementById('mobileUserButtonV142')) return;
-    const btn=document.createElement('button');
-    btn.id='mobileUserButtonV142';
-    btn.className='mobileUserButtonV142';
-    btn.type='button';
-    btn.textContent='ME';
-    btn.addEventListener('click',function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      openUserPickerV142();
-    });
-    toolbar.insertBefore(btn,clear||null);
-    updateUserButtonV142();
-  }
-
-  async function bootV142(){
-    if(!isMobileV142()) return;
-    selectedUserV142=readSavedUserV142();
-    ensureUserButtonV142();
-
-    /* Load the endpoint and employee list without blocking route startup. */
-    setTimeout(refreshEndpointV142,1400);
-    setTimeout(fetchEmployeesV142,1800);
-
-    if(!selectedUserV142){
-      setTimeout(openUserPickerV142,2200);
-    }else{
-      setTimeout(()=>sendTrackingV142('visit'),2600);
-      startHeartbeatV142();
-    }
-
-    clearInterval(configTimerV142);
-    configTimerV142=setInterval(()=>{
-      if(!endpointV142) refreshEndpointV142();
-      else if(pendingVisitV142) sendTrackingV142('visit');
-    },60000);
-  }
-
-  document.addEventListener('visibilitychange',function(){
-    if(!document.hidden && selectedUserV142){
-      sendTrackingV142('ping');
-    }
-  });
-
-  window.addEventListener('orientationchange',function(){
-    setTimeout(()=>{
-      if(isMobileV142()) bootV142();
-      else document.getElementById('mobileUserOverlayV142')?.setAttribute('hidden','');
-    },180);
-  });
-
-  setTimeout(bootV142,900);
+  function open(){if(!mobile())return;const el=overlay();activeName=name;document.getElementById('mobileSelectedEmployee').textContent=name;document.getElementById('mobilePhoneV143').value=phone;el.hidden=false;renderNames();roster();}
+  function updateButton(){const b=document.getElementById('mobileUserButtonV142');if(b){b.title=name?name+' • '+(pending?'Sync pending / Sincronización pendiente':'Registered / Registrado'):'Choose user / Selecciona usuario';b.setAttribute('aria-label','Change registration / Cambiar registro');}}
+  function toolbar(){const host=document.getElementById('mobileRouteSearchV133');if(!host||document.getElementById('mobileUserButtonV142'))return;const b=document.createElement('button');b.id='mobileUserButtonV142';b.className='mobileUserButtonV142';b.type='button';b.textContent='ME';b.onclick=open;host.insertBefore(b,document.getElementById('mobileRouteSearchClearV133'));updateButton();}
+  function boot(){if(!mobile())return;toolbar();if(booted)return;booted=true;config();roster();if(!name||!phone)open();setInterval(()=>{if(!endpoint)config();if(!document.hidden){send();if(!employees.length)roster();}toolbar()},60000);}
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)send()});window.addEventListener('resize',boot);setTimeout(boot,1800);
 })();
+
 </script>
 
 </body></html>
