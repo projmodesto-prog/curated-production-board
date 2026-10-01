@@ -4490,6 +4490,9 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
 
 <script>
+/* V140 — MOBILE ROUTE STARTUP RECOVERY
+   Reduces startup request contention and recovers the first enabled route day if needed. */
+
 /* V138 — MOBILE SHOW YES + CURRENT WEEK GUARD
    Keeps previous-week data in Google Sheets for history, but mobile only displays
    route days explicitly enabled with SHOW DAY = YES and a weekly schedule whose
@@ -4537,15 +4540,41 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
         )
       );
 
+      const enabledCandidatesV140=[];
       settled.forEach(result=>{
         if(result.status!=='fulfilled' || !result.value?.data) return;
         const idx=result.value.idx;
         const data=result.value.data;
-        routeAvailabilityV138[idx]=(typeof isEnabled==='function')
+        const enabled=(typeof isEnabled==='function')
           ? !!isEnabled(data.settings||{})
           : false;
+        routeAvailabilityV138[idx]=enabled;
+        if(enabled) enabledCandidatesV140.push({idx,data});
       });
       applyRouteAvailabilityV138();
+
+      /* V140 — MOBILE ROUTE STARTUP RECOVERY
+         If the normal startup request was delayed by several simultaneous Google Sheet
+         requests, use the already-fetched SHOW YES data to paint the first enabled day
+         instead of leaving the phone on LOADING ROUTES. */
+      if(isPortraitMobileV138() &&
+         typeof activeDayIndex!=='undefined' && activeDayIndex<0 &&
+         enabledCandidatesV140.length &&
+         typeof displayDay==='function'){
+        enabledCandidatesV140.sort((a,b)=>a.idx-b.idx);
+        const first=enabledCandidatesV140[0];
+        try{
+          await displayDay(first,false);
+          const dateEl=document.getElementById('dateText');
+          if(dateEl && /LOADING ROUTES/i.test(String(dateEl.textContent||''))){
+            dateEl.textContent=String(first.data?.settings?.routeDate || DAY_SHEETS[first.idx].replace(' ROUTES','')).toUpperCase();
+          }
+          if(typeof refreshActiveDay==='function'){
+            clearInterval(refreshInterval);
+            refreshInterval=setInterval(refreshActiveDay,5000);
+          }
+        }catch(e){}
+      }
     }finally{
       routeAvailabilityBusyV138=false;
     }
@@ -4646,7 +4675,9 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   }
 
   /* Re-check when opening/rotating and when SHOW DAY values change in Sheets. */
-  setTimeout(refreshRouteAvailabilityV138,250);
+  /* V140: let the primary route loader go first; the previous 250ms seven-day
+     request burst could compete with startup on mobile Chrome. */
+  setTimeout(refreshRouteAvailabilityV138,3500);
   setInterval(refreshRouteAvailabilityV138,30000);
 
   window.addEventListener('resize',function(){
