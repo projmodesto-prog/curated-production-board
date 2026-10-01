@@ -1741,9 +1741,8 @@ function render(rows, settings = {}){
 
   visibleRows.forEach(r => {
     const tr = document.createElement('tr');
-    // V61 — NOTES column shows only SECOND NOTE (column H).
-    // DELIVERY / PICK UP status from column G is intentionally not displayed here.
-    const routeNote = String(r[7] || '').trim();
+    const noteClass = routeStatusClass(r[6]);
+    const noteLabel = routeStatusLabel(r[6]);
     tr.innerHTML = `
       <td>${esc(formatRouteTime(r[0]))}</td>
       <td>${esc(r[1])}</td>
@@ -1751,7 +1750,7 @@ function render(rows, settings = {}){
       <td>${crewPills(r[3])}</td>
       <td><span class="contractFull">${esc(r[4])}</span></td>
       <td><span class="locationFull">${esc(r[5])}</span></td>
-      <td><span class="routeNoteText">${esc(routeNote)}</span></td>`;
+      <td><span class="statusBadge ${noteClass}">${esc(noteLabel)}</span></td>`;
     body.appendChild(tr);
   });
 
