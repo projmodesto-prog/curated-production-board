@@ -1665,6 +1665,40 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V139 — WEEKLY SCHEDULE TODAY TAB
+   Portrait mobile only. Adds TODAY beside MON-SUN in Employee Schedule. */
+@media (max-width:960px) and (orientation:portrait){
+  #weeklyScheduleSlide .weeklyMobileNav{
+    grid-template-columns:1.35fr repeat(7,minmax(0,1fr))!important;
+  }
+
+  #weeklyScheduleSlide #weeklyScheduleTodayV134{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-width:0!important;
+    height:30px!important;
+    margin:0!important;
+    padding:0 3px!important;
+    border:1px solid #4f7382!important;
+    border-radius:4px!important;
+    background:#123544!important;
+    color:#fff!important;
+    font:950 8px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:.2px!important;
+    white-space:nowrap!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+
+  #weeklyScheduleSlide #weeklyScheduleTodayV134:active{
+    background:#1773b8!important;
+    border-color:#6eb4ee!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4625,6 +4659,47 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       if(typeof weeklyScheduleData!=='undefined' && weeklyScheduleData) applyWeeklyFreshnessV138(weeklyScheduleData);
     },160);
   });
+})();
+</script>
+
+
+
+<script>
+/* V139 — WEEKLY SCHEDULE TODAY TAB
+   Reuses the existing TODAY action and places it beside the seven weekday tabs. */
+(function(){
+  function isPortraitMobileV139(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  function placeTodayTabV139(){
+    if(!isPortraitMobileV139()) return;
+    const nav=document.getElementById('weeklyMobileNavV131');
+    const today=document.getElementById('weeklyScheduleTodayV134');
+    if(!nav || !today) return;
+
+    if(today.parentElement!==nav){
+      nav.insertBefore(today,nav.firstChild);
+    }
+
+    today.textContent='TODAY';
+    today.setAttribute('aria-label','Show today in weekly schedule');
+  }
+
+  placeTodayTabV139();
+  setTimeout(placeTodayTabV139,250);
+  setTimeout(placeTodayTabV139,800);
+
+  const slide=document.getElementById('weeklyScheduleSlide');
+  if(slide){
+    const observer=new MutationObserver(function(){
+      placeTodayTabV139();
+    });
+    observer.observe(slide,{childList:true,subtree:true});
+  }
+
+  window.addEventListener('resize',placeTodayTabV139);
+  window.addEventListener('orientationchange',function(){setTimeout(placeTodayTabV139,150)});
 })();
 </script>
 
