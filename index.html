@@ -1543,6 +1543,72 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V137 — MOBILE ROUTE DAY BAR
+   Adds TODAY + MON-SUN direct route navigation on portrait phones only. */
+.mobileRouteDayBarV137{display:none}
+
+@media (max-width:960px) and (orientation:portrait){
+  /* TODAY moves into its own day strip, leaving search + SCHEDULE + clear above. */
+  #tableWrap .mobileRouteSearchV133{
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+  }
+
+  #tableWrap .mobileRouteDayBarV137{
+    display:grid!important;
+    grid-template-columns:1.35fr repeat(7,minmax(0,1fr))!important;
+    gap:3px!important;
+    flex:0 0 34px!important;
+    width:100%!important;
+    height:34px!important;
+    min-height:34px!important;
+    padding:3px 6px 4px!important;
+    border-bottom:1px solid #29414a!important;
+    background:#07151b!important;
+    z-index:14!important;
+  }
+
+  #mobileRouteDayBarV137 button{
+    min-width:0!important;
+    height:27px!important;
+    margin:0!important;
+    padding:0 2px!important;
+    border:1px solid #38535e!important;
+    border-radius:5px!important;
+    background:#0a2029!important;
+    color:#dce7eb!important;
+    font:950 7.3px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:.15px!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+
+  #mobileRouteDayBarV137 #mobileRouteTodayV134{
+    display:flex!important;
+    min-width:0!important;
+    height:27px!important;
+    padding:0 3px!important;
+    border-color:#4f7382!important;
+    border-radius:5px!important;
+    background:#123544!important;
+    font-size:7.3px!important;
+  }
+
+  #mobileRouteDayBarV137 button.isTodayV137{
+    border-color:#5aa2df!important;
+    box-shadow:inset 0 0 0 1px rgba(90,162,223,.32)!important;
+  }
+
+  #mobileRouteDayBarV137 button.isActiveV137{
+    background:#1773b8!important;
+    border-color:#6eb4ee!important;
+    color:#fff!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4204,6 +4270,129 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       if(!isPortraitMobileV136() && manualWeeklyV136) resumeRoutesV136();
     },150);
   });
+})();
+</script>
+
+
+
+<script>
+/* V137 — MOBILE ROUTE DAY BAR
+   TODAY + seven weekdays jump directly to that route sheet. */
+(function(){
+  function isPortraitMobileV137(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  const wrap=document.getElementById('tableWrap');
+  const toolbar=document.getElementById('mobileRouteSearchV133');
+  const todayBtn=document.getElementById('mobileRouteTodayV134');
+  const routeInput=document.getElementById('mobileRouteSearchInputV133');
+
+  if(!wrap || !toolbar || !todayBtn || document.getElementById('mobileRouteDayBarV137')) return;
+
+  const bar=document.createElement('div');
+  bar.id='mobileRouteDayBarV137';
+  bar.className='mobileRouteDayBarV137';
+  bar.setAttribute('aria-label','Route day navigation');
+
+  /* Move the existing TODAY button into the new day strip. */
+  bar.appendChild(todayBtn);
+
+  const labels=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  labels.forEach((label,idx)=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='mobileRouteDayButtonV137';
+    b.dataset.dayIndex=String(idx);
+    b.textContent=label;
+    b.setAttribute('aria-label','Show '+label+' routes');
+    bar.appendChild(b);
+  });
+
+  toolbar.insertAdjacentElement('afterend',bar);
+
+  function todayIndexV137(){
+    return (new Date().getDay()+6)%7;
+  }
+
+  function clearRouteSearchModeV137(){
+    if(routeInput) routeInput.value='';
+    wrap.classList.remove('mobileRouteGlobalSearchV134');
+
+    const summary=document.getElementById('mobileWeekRouteSummaryV134');
+    if(summary) summary.textContent='';
+
+    const rows=document.getElementById('routesBody');
+    if(rows){
+      Array.from(rows.querySelectorAll(':scope > tr')).forEach(tr=>{
+        tr.classList.remove('mobileRouteFilteredOutV133');
+        tr.classList.remove('mobileRouteExpandedV133');
+      });
+    }
+  }
+
+  function syncDayBarV137(){
+    if(!isPortraitMobileV137()) return;
+
+    const today=todayIndexV137();
+    bar.querySelectorAll('.mobileRouteDayButtonV137').forEach(btn=>{
+      const idx=Number(btn.dataset.dayIndex);
+      btn.classList.toggle('isTodayV137',idx===today);
+      btn.classList.toggle('isActiveV137',typeof activeDayIndex!=='undefined' && idx===activeDayIndex);
+      btn.setAttribute('aria-pressed',(typeof activeDayIndex!=='undefined' && idx===activeDayIndex)?'true':'false');
+    });
+
+    todayBtn.classList.toggle('isActiveV137',
+      typeof activeDayIndex!=='undefined' && activeDayIndex===today
+    );
+  }
+
+  async function openRouteDayV137(idx,button){
+    if(!isPortraitMobileV137()) return;
+    if(typeof DAY_SHEETS==='undefined' || !DAY_SHEETS[idx] || typeof fetchSheet!=='function' || typeof displayDay!=='function') return;
+
+    clearRouteSearchModeV137();
+
+    const old=button.textContent;
+    button.textContent='…';
+    button.disabled=true;
+    try{
+      const data=await fetchSheet(DAY_SHEETS[idx],2);
+      await displayDay({idx,data},false);
+      const rows=document.getElementById('routesBody');
+      if(rows) rows.scrollTop=0;
+      syncDayBarV137();
+    }catch(e){
+      button.textContent=old;
+    }finally{
+      button.disabled=false;
+      button.textContent=old;
+      syncDayBarV137();
+    }
+  }
+
+  bar.addEventListener('click',function(e){
+    const b=e.target.closest('.mobileRouteDayButtonV137');
+    if(!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openRouteDayV137(Number(b.dataset.dayIndex),b);
+  });
+
+  /* Existing TODAY behavior is kept; just clear search first and resync afterwards. */
+  todayBtn.addEventListener('click',function(){
+    clearRouteSearchModeV137();
+    setTimeout(syncDayBarV137,350);
+  });
+
+  /* Automatic rotation can change the active day, so keep the strip synchronized. */
+  const syncTimer=setInterval(()=>{
+    if(isPortraitMobileV137()) syncDayBarV137();
+  },900);
+
+  window.addEventListener('resize',syncDayBarV137);
+  window.addEventListener('orientationchange',function(){setTimeout(syncDayBarV137,150)});
+  syncDayBarV137();
 })();
 </script>
 
