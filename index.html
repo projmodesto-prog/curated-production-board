@@ -1609,6 +1609,62 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V138 — MOBILE SHOW YES + CURRENT WEEK GUARD
+   Portrait mobile only:
+   - Route day buttons are visible only when that day's SHOW DAY = YES.
+   - Old weekly employee schedules are never shown as if they were current. */
+@media (max-width:960px) and (orientation:portrait){
+  #mobileRouteDayBarV137 button.mobileRouteDayHiddenV138,
+  #mobileRouteDayBarV137 #mobileRouteTodayV134.mobileRouteDayHiddenV138{
+    display:none!important;
+  }
+
+  #weeklyScheduleSlide.mobileWeeklyStaleV138 .mobileScheduleSearchV134,
+  #weeklyScheduleSlide.mobileWeeklyStaleV138 .weeklyMobileNav,
+  #weeklyScheduleSlide.mobileWeeklyStaleV138 .weeklyMobileDayTitle,
+  #weeklyScheduleSlide.mobileWeeklyStaleV138 #weeklyScheduleTable{
+    display:none!important;
+  }
+
+  #weeklyScheduleSlide .weeklyScheduleUnavailableV138{
+    display:none;
+  }
+
+  #weeklyScheduleSlide.mobileWeeklyStaleV138 .weeklyScheduleUnavailableV138{
+    display:flex!important;
+    width:100%!important;
+    min-height:230px!important;
+    margin:8px 0 0!important;
+    padding:22px 18px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-direction:column!important;
+    gap:8px!important;
+    border:1px solid #36515c!important;
+    border-radius:8px!important;
+    background:#07151b!important;
+    color:#fff!important;
+    text-align:center!important;
+  }
+
+  #weeklyScheduleSlide .weeklyScheduleUnavailableV138 strong{
+    font-size:16px!important;
+    line-height:1.1!important;
+    font-weight:950!important;
+    letter-spacing:.4px!important;
+  }
+
+  #weeklyScheduleSlide .weeklyScheduleUnavailableV138 span{
+    max-width:310px!important;
+    color:#b8c9d0!important;
+    font-size:10px!important;
+    line-height:1.35!important;
+    font-weight:800!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3857,7 +3913,8 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       ));
       weekRouteDataV134=settled
         .filter(x=>x.status==='fulfilled' && x.value?.data)
-        .map(x=>x.value);
+        .map(x=>x.value)
+        .filter(x=>(typeof isEnabled==='function') ? isEnabled(x.data?.settings||{}) : true);
       weekRouteLoadedAtV134=Date.now();
       return weekRouteDataV134;
     }
@@ -4393,6 +4450,181 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   window.addEventListener('resize',syncDayBarV137);
   window.addEventListener('orientationchange',function(){setTimeout(syncDayBarV137,150)});
   syncDayBarV137();
+})();
+</script>
+
+
+
+<script>
+/* V138 — MOBILE SHOW YES + CURRENT WEEK GUARD
+   Keeps previous-week data in Google Sheets for history, but mobile only displays
+   route days explicitly enabled with SHOW DAY = YES and a weekly schedule whose
+   Monday-Sunday dates match the current week. */
+(function(){
+  function isPortraitMobileV138(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  /* ---------- ROUTE DAY VISIBILITY ---------- */
+  const routeAvailabilityV138=new Array(7).fill(null);
+  let routeAvailabilityBusyV138=false;
+
+  function applyRouteAvailabilityV138(){
+    if(!isPortraitMobileV138()) return;
+    const bar=document.getElementById('mobileRouteDayBarV137');
+    if(!bar) return;
+
+    bar.querySelectorAll('.mobileRouteDayButtonV137').forEach(btn=>{
+      const idx=Number(btn.dataset.dayIndex);
+      const enabled=routeAvailabilityV138[idx];
+      /* Unknown means "do not hide yet"; only a confirmed NO is removed. */
+      btn.classList.toggle('mobileRouteDayHiddenV138',enabled===false);
+      btn.disabled=(enabled===false);
+      btn.setAttribute('aria-hidden',enabled===false?'true':'false');
+    });
+
+    const todayBtn=document.getElementById('mobileRouteTodayV134');
+    if(todayBtn){
+      const todayIdx=(new Date().getDay()+6)%7;
+      const enabled=routeAvailabilityV138[todayIdx];
+      todayBtn.classList.toggle('mobileRouteDayHiddenV138',enabled===false);
+      todayBtn.disabled=(enabled===false);
+      todayBtn.setAttribute('aria-hidden',enabled===false?'true':'false');
+    }
+  }
+
+  async function refreshRouteAvailabilityV138(){
+    if(routeAvailabilityBusyV138 || typeof DAY_SHEETS==='undefined' || typeof fetchSheet!=='function') return;
+    routeAvailabilityBusyV138=true;
+    try{
+      const settled=await Promise.allSettled(
+        DAY_SHEETS.map((name,idx)=>
+          fetchSheet(name,1).then(data=>({idx,data}))
+        )
+      );
+
+      settled.forEach(result=>{
+        if(result.status!=='fulfilled' || !result.value?.data) return;
+        const idx=result.value.idx;
+        const data=result.value.data;
+        routeAvailabilityV138[idx]=(typeof isEnabled==='function')
+          ? !!isEnabled(data.settings||{})
+          : false;
+      });
+      applyRouteAvailabilityV138();
+    }finally{
+      routeAvailabilityBusyV138=false;
+    }
+  }
+
+  /* ---------- WEEKLY EMPLOYEE SCHEDULE FRESHNESS ---------- */
+  function parseHeaderDateV138(value){
+    const m=String(value||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(!m) return null;
+    const d=new Date(Number(m[3]),Number(m[1])-1,Number(m[2]),12,0,0,0);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function mondayOfWeekV138(date){
+    const d=new Date(date);
+    d.setHours(12,0,0,0);
+    const mondayZero=(d.getDay()+6)%7;
+    d.setDate(d.getDate()-mondayZero);
+    return d;
+  }
+
+  function sameDateV138(a,b){
+    return !!a && !!b &&
+      a.getFullYear()===b.getFullYear() &&
+      a.getMonth()===b.getMonth() &&
+      a.getDate()===b.getDate();
+  }
+
+  function weeklyScheduleIsCurrentV138(data){
+    const headers=Array.isArray(data?.headers) ? data.headers.slice(2,9) : [];
+    const dates=headers.map(parseHeaderDateV138).filter(Boolean);
+    if(dates.length<1) return false;
+
+    dates.sort((a,b)=>a-b);
+    const scheduleMonday=mondayOfWeekV138(dates[0]);
+    const currentMonday=mondayOfWeekV138(new Date());
+
+    /* Require the first dated schedule column to actually belong to this Monday-Sunday week. */
+    return sameDateV138(scheduleMonday,currentMonday) &&
+      dates.some(d=>sameDateV138(d,currentMonday));
+  }
+
+  function ensureUnavailablePanelV138(){
+    const slide=document.getElementById('weeklyScheduleSlide');
+    const host=slide?.querySelector('.extraSlideBody');
+    if(!host) return null;
+
+    let panel=document.getElementById('weeklyScheduleUnavailableV138');
+    if(!panel){
+      panel=document.createElement('div');
+      panel.id='weeklyScheduleUnavailableV138';
+      panel.className='weeklyScheduleUnavailableV138';
+      panel.innerHTML=
+        '<strong>WEEKLY SCHEDULE NOT PUBLISHED</strong>'+
+        '<span>The previous week is hidden. The current schedule will appear automatically when the new week is published.</span>';
+      host.appendChild(panel);
+    }
+    return panel;
+  }
+
+  function applyWeeklyFreshnessV138(data){
+    const slide=document.getElementById('weeklyScheduleSlide');
+    if(!slide || !isPortraitMobileV138()) return;
+
+    ensureUnavailablePanelV138();
+    const current=weeklyScheduleIsCurrentV138(data);
+    slide.classList.toggle('mobileWeeklyStaleV138',!current);
+
+    if(!current){
+      const subtitle=document.getElementById('weeklySlideSubtitle');
+      if(subtitle) subtitle.textContent='WEEKLY SCHEDULE NOT PUBLISHED';
+
+      const input=document.getElementById('weeklyScheduleSearchInputV134');
+      if(input) input.value='';
+
+      const body=document.getElementById('weeklyScheduleBody');
+      if(body){
+        Array.from(body.querySelectorAll(':scope > tr')).forEach(tr=>{
+          tr.classList.remove('mobileScheduleFilteredOutV134');
+          tr.classList.remove('mobileSchedulePersonalV134');
+        });
+      }
+    }
+  }
+
+  /* Wrap the final weekly renderer so every live refresh re-checks the week. */
+  const baseWeeklyRenderV138=window.renderWeeklyScheduleSlide;
+  if(typeof baseWeeklyRenderV138==='function'){
+    window.renderWeeklyScheduleSlide=function(data){
+      baseWeeklyRenderV138(data);
+      applyWeeklyFreshnessV138(data);
+    };
+  }
+
+  /* Initial state if schedule data was already loaded before this block ran. */
+  if(typeof weeklyScheduleData!=='undefined' && weeklyScheduleData){
+    applyWeeklyFreshnessV138(weeklyScheduleData);
+  }
+
+  /* Re-check when opening/rotating and when SHOW DAY values change in Sheets. */
+  setTimeout(refreshRouteAvailabilityV138,250);
+  setInterval(refreshRouteAvailabilityV138,30000);
+
+  window.addEventListener('resize',function(){
+    applyRouteAvailabilityV138();
+    if(typeof weeklyScheduleData!=='undefined' && weeklyScheduleData) applyWeeklyFreshnessV138(weeklyScheduleData);
+  });
+  window.addEventListener('orientationchange',function(){
+    setTimeout(()=>{
+      applyRouteAvailabilityV138();
+      if(typeof weeklyScheduleData!=='undefined' && weeklyScheduleData) applyWeeklyFreshnessV138(weeklyScheduleData);
+    },160);
+  });
 })();
 </script>
 
