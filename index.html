@@ -975,6 +975,169 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V133 — MOBILE ROUTE SEARCH + EXPAND
+   Portrait-phone routes only. MVIX / desktop / landscape remain unchanged. */
+.mobileRouteSearchV133{display:none}
+
+@media (max-width:960px) and (orientation:portrait){
+  #tableWrap.mobileRouteToolsReadyV133{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+
+  #tableWrap .mobileRouteSearchV133{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    align-items:center!important;
+    gap:6px!important;
+    flex:0 0 42px!important;
+    width:100%!important;
+    height:42px!important;
+    min-height:42px!important;
+    padding:5px 6px!important;
+    border-bottom:1px solid #29414a!important;
+    background:#07151b!important;
+    z-index:15!important;
+  }
+  #mobileRouteSearchInputV133{
+    width:100%!important;
+    min-width:0!important;
+    height:31px!important;
+    margin:0!important;
+    padding:0 10px!important;
+    border:1px solid #45606b!important;
+    border-radius:7px!important;
+    outline:none!important;
+    background:#f7f9fa!important;
+    color:#101416!important;
+    font:800 11px/1 Arial,Helvetica,sans-serif!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  #mobileRouteSearchInputV133:focus{
+    border-color:#5aa2df!important;
+    box-shadow:0 0 0 2px rgba(90,162,223,.18)!important;
+  }
+  #mobileRouteSearchInputV133::placeholder{
+    color:#66777e!important;
+    opacity:1!important;
+    font-weight:700!important;
+  }
+  #mobileRouteSearchCountV133{
+    min-width:34px!important;
+    color:#d9e3e7!important;
+    font-size:8px!important;
+    line-height:1!important;
+    font-weight:950!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+  }
+  #mobileRouteSearchClearV133{
+    width:30px!important;
+    height:30px!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid #45606b!important;
+    border-radius:7px!important;
+    background:#0d2732!important;
+    color:#fff!important;
+    font:950 16px/1 Arial,Helvetica,sans-serif!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+
+  #tableWrap.mobileRouteToolsReadyV133 #routeTable{
+    flex:1 1 auto!important;
+    height:auto!important;
+    min-height:0!important;
+  }
+
+  #routesBody tr.mobileRouteFilteredOutV133{
+    display:none!important;
+  }
+
+  /* Every route is tappable. Only one expanded card stays open at a time. */
+  #routesBody tr{
+    position:relative!important;
+    cursor:pointer!important;
+    transition:min-height .16s ease,border-color .16s ease,box-shadow .16s ease!important;
+  }
+  #routesBody tr::after{
+    content:"＋"!important;
+    position:absolute!important;
+    right:5px!important;
+    bottom:4px!important;
+    width:17px!important;
+    height:17px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    border-radius:50%!important;
+    background:#0a2029!important;
+    color:#fff!important;
+    font-size:11px!important;
+    line-height:1!important;
+    font-weight:950!important;
+    pointer-events:none!important;
+    opacity:.82!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133{
+    min-height:272px!important;
+    grid-template-rows:minmax(38px,auto) minmax(44px,auto) minmax(52px,auto) minmax(60px,auto) minmax(58px,auto)!important;
+    border-color:#5aa2df!important;
+    box-shadow:0 3px 12px rgba(0,0,0,.28),0 0 0 2px rgba(90,162,223,.16)!important;
+    background:#fff!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133::after{
+    content:"−"!important;
+    background:#1773b8!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 td{
+    padding:6px 7px!important;
+    font-size:clamp(11px,3.2vw,13px)!important;
+    line-height:1.16!important;
+    overflow:visible!important;
+    white-space:normal!important;
+    align-content:center!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 td::before{
+    font-size:clamp(6px,1.8vw,7.5px)!important;
+    align-self:start!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 .driverBadge{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 .crewCell{
+    flex-wrap:wrap!important;
+    overflow:visible!important;
+    align-content:center!important;
+    row-gap:4px!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 .crewPerson{
+    font-size:.9em!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 .contractFull,
+  #routesBody tr.mobileRouteExpandedV133 .locationFull{
+    display:block!important;
+    width:100%!important;
+    max-height:none!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    -webkit-line-clamp:unset!important;
+    -webkit-box-orient:initial!important;
+    overflow-wrap:anywhere!important;
+  }
+  #routesBody tr.mobileRouteExpandedV133 .statusBadgeWrap{
+    flex-wrap:wrap!important;
+    overflow:visible!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3020,6 +3183,134 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       changeDay(dx<0 ? 1 : -1);
     }
   },{passive:true});
+})();
+</script>
+
+
+
+<script>
+/* V133 — MOBILE ROUTE SEARCH + EXPAND
+   Search matches all visible route fields. Tap a card to expand full details. */
+(function(){
+  const wrap=document.getElementById('tableWrap');
+  const table=document.getElementById('routeTable');
+  const body=document.getElementById('routesBody');
+  if(!wrap || !table || !body || document.getElementById('mobileRouteSearchV133')) return;
+
+  const tools=document.createElement('div');
+  tools.id='mobileRouteSearchV133';
+  tools.className='mobileRouteSearchV133';
+  tools.innerHTML=
+    '<input id="mobileRouteSearchInputV133" type="search" inputmode="search" autocomplete="off" spellcheck="false" aria-label="Search routes" placeholder="Search contract, location, truck, driver...">'+
+    '<span id="mobileRouteSearchCountV133" aria-live="polite"></span>'+
+    '<button id="mobileRouteSearchClearV133" type="button" aria-label="Clear route search">×</button>';
+
+  wrap.insertBefore(tools,table);
+  wrap.classList.add('mobileRouteToolsReadyV133');
+
+  const input=document.getElementById('mobileRouteSearchInputV133');
+  const count=document.getElementById('mobileRouteSearchCountV133');
+  const clear=document.getElementById('mobileRouteSearchClearV133');
+
+  function isPortraitMobile(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  function normalized(value){
+    let s=String(value||'').toLowerCase();
+    try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}
+    return s.trim();
+  }
+
+  function routeRows(){
+    return Array.from(body.querySelectorAll(':scope > tr'));
+  }
+
+  function applyRouteSearchV133(){
+    const rows=routeRows();
+    if(!isPortraitMobile()){
+      rows.forEach(tr=>tr.classList.remove('mobileRouteFilteredOutV133'));
+      if(count) count.textContent='';
+      return;
+    }
+
+    const q=normalized(input ? input.value : '');
+    let visible=0;
+    rows.forEach(tr=>{
+      const match=!q || normalized(tr.textContent).includes(q);
+      tr.classList.toggle('mobileRouteFilteredOutV133',!match);
+      if(match) visible++;
+      if(!match) tr.classList.remove('mobileRouteExpandedV133');
+    });
+
+    if(count) count.textContent=q ? (visible+'/'+rows.length) : String(rows.length);
+  }
+
+  if(input){
+    input.addEventListener('input',applyRouteSearchV133);
+    input.addEventListener('search',applyRouteSearchV133);
+  }
+
+  if(clear){
+    clear.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(input){
+        input.value='';
+        input.focus();
+      }
+      applyRouteSearchV133();
+    });
+  }
+
+  /* Event delegation keeps expansion working after Google Sheet refreshes replace the rows. */
+  body.addEventListener('click',function(e){
+    if(!isPortraitMobile()) return;
+    const tr=e.target.closest('tr');
+    if(!tr || tr.parentElement!==body || tr.classList.contains('mobileRouteFilteredOutV133')) return;
+
+    const opening=!tr.classList.contains('mobileRouteExpandedV133');
+    routeRows().forEach(row=>{
+      if(row!==tr) row.classList.remove('mobileRouteExpandedV133');
+    });
+    tr.classList.toggle('mobileRouteExpandedV133',opening);
+
+    if(opening){
+      requestAnimationFrame(()=>{
+        const top=tr.offsetTop-6;
+        body.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+      });
+    }
+  });
+
+  /* Reapply the current search automatically whenever live route data refreshes. */
+  let pending=false;
+  const observer=new MutationObserver(function(mutations){
+    if(!mutations.some(m=>m.type==='childList')) return;
+    if(pending) return;
+    pending=true;
+    requestAnimationFrame(()=>{
+      pending=false;
+      applyRouteSearchV133();
+    });
+  });
+  observer.observe(body,{childList:true});
+
+  function syncMobileRouteToolsV133(){
+    if(!isPortraitMobile()){
+      routeRows().forEach(tr=>{
+        tr.classList.remove('mobileRouteFilteredOutV133');
+        tr.classList.remove('mobileRouteExpandedV133');
+      });
+      if(count) count.textContent='';
+    }else{
+      applyRouteSearchV133();
+    }
+  }
+
+  window.addEventListener('resize',syncMobileRouteToolsV133);
+  window.addEventListener('orientationchange',function(){setTimeout(syncMobileRouteToolsV133,120)});
+  applyRouteSearchV133();
 })();
 </script>
 
