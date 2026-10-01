@@ -1835,6 +1835,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 
 @media(max-width:960px){.mobileUserCardV142{overflow-y:auto!important}.mobileUserHeadV142,#mobileRegistrationForm,.mobileUserFootV142{flex-shrink:0}.mobileUserListV142{min-height:80px!important;max-height:25vh!important;flex-shrink:0}#mobileRegistrationForm button{text-align:center!important;background:#a9e8c4!important;color:#102418!important}}
 </style>
+<style>@media(max-width:960px){html.qrAccessLockedV144 #viewport{visibility:hidden!important}html.qrAccessLockedV144 .mobileUserOverlayV142{background:#030c10!important}}</style>
 </head>
 <body>
 <!-- V113 FINAL: Sheet-driven weather/messages/photos. Photos display only when SHOW=YES. No demo/preview images. -->
@@ -4921,7 +4922,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
 
 <script>
-/* V143: employee + phone registration; private phone storage through Apps Script. */
+/* V144: basic mobile QR entry control. Public routes remain public; this is not authentication. */
 (function(){
   const USER='curated_mobile_user_v142', PHONE='curated_mobile_phone_v143', DEVICE='curated_mobile_device_v142';
   const mobile=()=>window.matchMedia('(max-width: 960px)').matches;
@@ -4932,8 +4933,23 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   const phoneNumber=v=>{const n=String(v||'').replace(/\D/g,'');return n.length===10?'+1'+n:n.length===11&&n[0]==='1'?'+'+n:''};
   let device=read(DEVICE)||('dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));write(DEVICE,device);
   let name=read(USER), phone=read(PHONE), employees=[], endpoint='', pending=true, busy=false, booted=false, activeName='';
+  let accessRows=[], accessReady=false, accessBusy=false, allowed=false;
   let event=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
   function page(){return document.getElementById('weeklyScheduleSlide')?.classList.contains('isActive')?'schedule':document.getElementById('todayCrewSlide')?.classList.contains('isActive')?'crew':'routes'}
+  function gate(show){
+    const el=overlay();el.hidden=!show;
+    const viewport=document.getElementById('viewport');
+    if(viewport){viewport.inert=show;viewport.style.visibility=show?'hidden':'';}
+    document.documentElement.classList.toggle('qrAccessLockedV144',show);
+  }
+  function permitted(employee){
+    return accessReady && accessRows.some(r=>normalize(r[0])===normalize(employee) && (normalize(r[2])==='' || normalize(r[2])==='permitido'));
+  }
+  function checkAccess(){
+    allowed=!!name&&!!phone&&permitted(name);
+    if(!allowed){gate(true);status(!accessReady?'Unable to verify access. Try again. / No se pudo verificar el acceso. Intenta de nuevo.':name&&!permitted(name)?'Access not authorized. Contact your supervisor. / Acceso no autorizado. Contacta a tu supervisor.':'Select your name and enter your phone. / Selecciona tu nombre e ingresa tu teléfono.');}
+    else if(!pending)gate(false);
+  }
   function status(text){const el=document.getElementById('mobileRegistrationStatus');if(el)el.textContent=text;}
   function ack(id){return new Promise(resolve=>{
     const cb='__curatedAck_'+Date.now()+'_'+Math.floor(Math.random()*1e6), script=document.createElement('script');
@@ -4942,13 +4958,14 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     script.src=endpoint+'?'+new URLSearchParams({action:'ack',event:id,callback:cb});document.head.appendChild(script);
   });}
   async function send(){
-    if(!mobile()||!name||!phone||!endpoint||busy)return;
+    if(!mobile()||!allowed||!name||!phone||!endpoint||busy)return;
     busy=true;const visit=pending, id=visit?event:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
     try{
       const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),12000);
       try{await fetch(endpoint,{method:'POST',mode:'no-cors',credentials:'omit',signal:controller.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({name,phone:visit?phone:'',device,action:visit?'visit':'ping',event:id,page:page()})});}catch(e){}finally{clearTimeout(timeout);}
       if(await ack(id)){
         if(visit&&event===id)pending=false;
+        if(permitted(name)){allowed=true;gate(false);}else{allowed=false;gate(true);return;}
         status('Registered / Registrado');
         const button=document.getElementById('mobileUserButtonV142');if(button)button.title=name+' • Registered / Registrado';
       }else status('Connection pending. We will retry. / Conexión pendiente. Reintentaremos.');
@@ -4963,9 +4980,11 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     }catch(e){}
   }
   async function roster(){
-    try{const rows=await fetchExtraSheetOnce('1987654321','A1:A200',1);employees=[...new Set(rows.slice(1).map(r=>clean(r[0])).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
-    catch(e){employees=[];}
-    renderNames();
+    if(accessBusy)return;accessBusy=true;
+    try{const rows=await fetchExtraSheetOnce('1987654321','A1:C200',3);accessRows=rows.slice(1);accessReady=true;employees=[...new Set(accessRows.map(r=>clean(r[0])).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
+    catch(e){accessReady=false;}
+    finally{accessBusy=false;}
+    renderNames();checkAccess();
   }
   function overlay(){
     let el=document.getElementById('mobileUserOverlayV142');if(el)return el;
@@ -4973,12 +4992,14 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     el.innerHTML='<div class="mobileUserCardV142" role="dialog" aria-modal="true" aria-labelledby="mobileRegistrationTitle"><div class="mobileUserHeadV142"><div class="mobileUserBrandV142">CURATED EVENTS • NASHVILLE</div><div class="mobileUserTitleV142" id="mobileRegistrationTitle">Employee registration / Registro de empleado</div><div class="mobileUserSubtitleV142">Choose your name and enter your phone once. / Selecciona tu nombre e ingresa tu teléfono una vez.</div></div><input id="mobileUserSearchV142" type="search" placeholder="Search your name / Busca tu nombre" autocomplete="off"><div id="mobileUserListV142" class="mobileUserListV142"></div><form id="mobileRegistrationForm" style="padding:16px"><div id="mobileSelectedEmployee" style="font-weight:bold;margin-bottom:12px"></div><label for="mobilePhoneV143">Phone number / Número de teléfono</label><input id="mobilePhoneV143" type="tel" autocomplete="tel" inputmode="tel" required maxlength="25" placeholder="(615) 555-0123" style="display:block;width:100%;font-size:18px;padding:12px;margin:8px 0 14px;border-radius:8px;border:1px solid #678;background:#fff;color:#111"><button type="submit" class="mobileUserNameV142" style="width:100%;background:#a9e8c4;color:#102418">Enter / Entrar</button><div id="mobileRegistrationStatus" role="status" aria-live="polite" style="margin-top:12px;font-size:14px"></div></form><div class="mobileUserFootV142">Name, phone and visits are recorded for internal use. This device remembers your registration. / Guardamos nombre, teléfono y visitas para uso interno. Este dispositivo recuerda tu registro.</div></div>';
     document.body.appendChild(el);
     document.getElementById('mobileUserSearchV142').addEventListener('input',renderNames);
-    document.getElementById('mobileRegistrationForm').addEventListener('submit',e=>{
+    document.getElementById('mobileRegistrationForm').addEventListener('submit',async e=>{
       e.preventDefault();const entered=phoneNumber(document.getElementById('mobilePhoneV143').value);
       if(!activeName){status('Select your name. / Selecciona tu nombre.');return;}
       if(!entered){status('Enter a valid 10-digit US phone number. / Ingresa un teléfono válido de 10 dígitos.');return;}
+      await roster();
+      if(!permitted(activeName)){status(accessReady?'Access not authorized. / Acceso no autorizado.':'Unable to verify access. Try again. / No se pudo verificar el acceso. Intenta de nuevo.');return;}
       name=activeName;phone=entered;write(USER,name);write(PHONE,phone);pending=true;event=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-      el.hidden=true;send();updateButton();
+      allowed=true;gate(true);status('Verifying registration… / Verificando registro…');if(!endpoint)await config();await send();if(!endpoint)status('Connection unavailable. Try again. / Conexión no disponible. Intenta de nuevo.');updateButton();
     });return el;
   }
   function renderNames(){
@@ -4991,8 +5012,8 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   function open(){if(!mobile())return;const el=overlay();activeName=name;document.getElementById('mobileSelectedEmployee').textContent=name;document.getElementById('mobilePhoneV143').value=phone;el.hidden=false;renderNames();roster();}
   function updateButton(){const b=document.getElementById('mobileUserButtonV142');if(b){b.title=name?name+' • '+(pending?'Sync pending / Sincronización pendiente':'Registered / Registrado'):'Choose user / Selecciona usuario';b.setAttribute('aria-label','Change registration / Cambiar registro');}}
   function toolbar(){const host=document.getElementById('mobileRouteSearchV133');if(!host||document.getElementById('mobileUserButtonV142'))return;const b=document.createElement('button');b.id='mobileUserButtonV142';b.className='mobileUserButtonV142';b.type='button';b.textContent='ME';b.onclick=open;host.insertBefore(b,document.getElementById('mobileRouteSearchClearV133'));updateButton();}
-  function boot(){if(!mobile())return;toolbar();if(booted)return;booted=true;config();roster();if(!name||!phone)open();setInterval(()=>{if(!endpoint)config();if(!document.hidden){send();if(!employees.length)roster();}toolbar()},60000);}
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)send()});window.addEventListener('resize',boot);setTimeout(boot,1800);
+  function boot(){if(!mobile())return;toolbar();if(booted)return;booted=true;open();gate(true);status('Checking access… / Verificando acceso…');Promise.all([config(),roster()]).then(send);setInterval(async()=>{if(!endpoint)config();if(!document.hidden){await roster();send();}toolbar()},30000);}
+  document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await roster();send()}});window.addEventListener('resize',boot);setTimeout(boot,1800);
 })();
 
 </script>
