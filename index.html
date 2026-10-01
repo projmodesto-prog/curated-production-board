@@ -4682,8 +4682,12 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
       nav.insertBefore(today,nav.firstChild);
     }
 
-    today.textContent='TODAY';
-    today.setAttribute('aria-label','Show today in weekly schedule');
+    /* Avoid rewriting the same node on every MutationObserver callback.
+       Reassigning textContent repeatedly can create a self-triggering mutation loop in mobile browsers. */
+    if(today.textContent!=='TODAY') today.textContent='TODAY';
+    if(today.getAttribute('aria-label')!=='Show today in weekly schedule'){
+      today.setAttribute('aria-label','Show today in weekly schedule');
+    }
   }
 
   placeTodayTabV139();
