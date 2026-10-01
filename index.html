@@ -1699,6 +1699,140 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
   }
 }
 
+
+
+/* V142 — MOBILE USER REGISTRATION + USAGE TRACKING
+   Portrait-phone only. MVIX / desktop / landscape remain unchanged. */
+.mobileUserOverlayV142,
+.mobileUserButtonV142{display:none}
+
+@media (max-width:960px) and (orientation:portrait){
+  #tableWrap .mobileRouteSearchV133{
+    grid-template-columns:minmax(0,1fr) auto auto auto!important;
+  }
+
+  #mobileUserButtonV142{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:32px!important;
+    height:30px!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid #4f7382!important;
+    border-radius:7px!important;
+    background:#0f2d38!important;
+    color:#fff!important;
+    font:950 8px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:.3px!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  #mobileUserButtonV142:active{background:#1773b8!important}
+
+  .mobileUserOverlayV142{
+    position:fixed!important;
+    inset:0!important;
+    z-index:99999!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    padding:16px!important;
+    background:rgba(0,8,12,.88)!important;
+    backdrop-filter:blur(6px)!important;
+    -webkit-backdrop-filter:blur(6px)!important;
+  }
+  .mobileUserOverlayV142[hidden]{display:none!important}
+
+  .mobileUserCardV142{
+    width:min(430px,100%)!important;
+    max-height:min(720px,88vh)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    border:1px solid #355562!important;
+    border-radius:14px!important;
+    background:#07151b!important;
+    color:#fff!important;
+    box-shadow:0 18px 50px rgba(0,0,0,.5)!important;
+  }
+  .mobileUserHeadV142{
+    padding:18px 18px 12px!important;
+    border-bottom:1px solid #29414a!important;
+  }
+  .mobileUserBrandV142{
+    color:#72c9ff!important;
+    font:950 9px/1 Arial,Helvetica,sans-serif!important;
+    letter-spacing:1.5px!important;
+    text-transform:uppercase!important;
+  }
+  .mobileUserTitleV142{
+    margin-top:8px!important;
+    font:950 24px/1.05 Arial,Helvetica,sans-serif!important;
+  }
+  .mobileUserSubtitleV142{
+    margin-top:7px!important;
+    color:#b9c9d0!important;
+    font:750 11px/1.35 Arial,Helvetica,sans-serif!important;
+  }
+  #mobileUserSearchV142{
+    width:calc(100% - 28px)!important;
+    height:42px!important;
+    margin:14px 14px 8px!important;
+    padding:0 12px!important;
+    border:1px solid #45606b!important;
+    border-radius:9px!important;
+    outline:none!important;
+    background:#f7f9fa!important;
+    color:#101416!important;
+    font:850 16px/1 Arial,Helvetica,sans-serif!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  #mobileUserSearchV142:focus{
+    border-color:#5aa2df!important;
+    box-shadow:0 0 0 2px rgba(90,162,223,.2)!important;
+  }
+  .mobileUserListV142{
+    min-height:130px!important;
+    max-height:52vh!important;
+    overflow-y:auto!important;
+    padding:4px 10px 12px!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .mobileUserNameV142{
+    width:100%!important;
+    min-height:44px!important;
+    margin:4px 0!important;
+    padding:8px 12px!important;
+    border:1px solid #304a55!important;
+    border-radius:8px!important;
+    background:#0d2732!important;
+    color:#fff!important;
+    text-align:left!important;
+    font:900 13px/1.15 Arial,Helvetica,sans-serif!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+  }
+  .mobileUserNameV142.isCurrentV142{
+    border-color:#69b8ed!important;
+    background:#154867!important;
+  }
+  .mobileUserEmptyV142{
+    padding:24px 12px!important;
+    color:#adc0c8!important;
+    text-align:center!important;
+    font:800 11px/1.4 Arial,Helvetica,sans-serif!important;
+  }
+  .mobileUserFootV142{
+    padding:10px 14px 14px!important;
+    border-top:1px solid #29414a!important;
+    color:#879ba4!important;
+    font:700 8px/1.35 Arial,Helvetica,sans-serif!important;
+    text-align:center!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4780,6 +4914,269 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
   window.addEventListener('resize',placeTodayTabV139);
   window.addEventListener('orientationchange',function(){setTimeout(placeTodayTabV139,150)});
+})();
+</script>
+
+
+
+<script>
+/* V142 — MOBILE USER REGISTRATION + USAGE TRACKING
+   First mobile visit asks the employee to identify themselves. The device remembers
+   that choice. Once the Apps Script URL is placed in MOBILE USERS SETUP!B3, visits
+   and 60-second heartbeats are written to the MOBILE USERS tab automatically. */
+(function(){
+  const EMPLOYEE_GID_V142='1987654321';
+  const MOBILE_SETUP_GID_V142='1987654351';
+  const USER_KEY_V142='curated_mobile_user_v142';
+  const DEVICE_KEY_V142='curated_mobile_device_v142';
+
+  let endpointV142='';
+  let employeesV142=[];
+  let selectedUserV142='';
+  let heartbeatV142=null;
+  let configTimerV142=null;
+
+  function isMobileV142(){
+    return !!(window.matchMedia && window.matchMedia('(max-width: 960px) and (orientation: portrait)').matches);
+  }
+
+  function cleanV142(v){ return String(v||'').trim(); }
+  function normV142(v){
+    let s=cleanV142(v).toLowerCase();
+    try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}
+    return s;
+  }
+
+  function getDeviceIdV142(){
+    try{
+      let id=localStorage.getItem(DEVICE_KEY_V142);
+      if(id) return id;
+      if(window.crypto?.randomUUID) id=crypto.randomUUID();
+      else id='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+      localStorage.setItem(DEVICE_KEY_V142,id);
+      return id;
+    }catch(e){
+      return 'session-'+Math.random().toString(36).slice(2,10);
+    }
+  }
+
+  function currentPageV142(){
+    const weekly=document.getElementById('weeklyScheduleSlide');
+    const crew=document.getElementById('todayCrewSlide');
+    if(weekly?.classList.contains('isActive')) return 'schedule';
+    if(crew?.classList.contains('isActive')) return 'crew';
+    return 'routes';
+  }
+
+  function readSavedUserV142(){
+    try{return cleanV142(localStorage.getItem(USER_KEY_V142)||'')}catch(e){return ''}
+  }
+
+  function saveUserV142(name){
+    selectedUserV142=cleanV142(name);
+    try{localStorage.setItem(USER_KEY_V142,selectedUserV142)}catch(e){}
+    updateUserButtonV142();
+  }
+
+  function clearUserV142(){
+    selectedUserV142='';
+    try{localStorage.removeItem(USER_KEY_V142)}catch(e){}
+    updateUserButtonV142();
+  }
+
+  async function fetchEmployeesV142(){
+    try{
+      if(typeof fetchExtraSheetOnce!=='function') throw new Error('sheet helper unavailable');
+      const rows=await fetchExtraSheetOnce(EMPLOYEE_GID_V142,'A1:A100',1);
+      const names=rows.slice(1).map(r=>cleanV142(r?.[0])).filter(Boolean);
+      employeesV142=[...new Set(names)];
+    }catch(e){
+      const fallback=(window.weeklyScheduleData?.rows||[]).map(r=>cleanV142(r?.[0])).filter(Boolean);
+      employeesV142=[...new Set(fallback)];
+    }
+    employeesV142.sort((a,b)=>a.localeCompare(b));
+    return employeesV142;
+  }
+
+  async function refreshEndpointV142(){
+    try{
+      if(typeof fetchExtraSheetOnce!=='function') return endpointV142;
+      const rows=await fetchExtraSheetOnce(MOBILE_SETUP_GID_V142,'A1:B6',2);
+      const row=rows.find(r=>/^WEB APP URL/i.test(cleanV142(r?.[0])));
+      const candidate=cleanV142(row?.[1]);
+      if(/^https:\/\/script\.google\.com\/macros\/s\//i.test(candidate)){
+        endpointV142=candidate;
+        if(selectedUserV142) sendTrackingV142('ping');
+      }
+    }catch(e){}
+    return endpointV142;
+  }
+
+  function sendTrackingV142(action){
+    if(!isMobileV142() || !selectedUserV142 || !endpointV142) return;
+    const cb='__curatedMobileUser_'+Date.now()+'_'+Math.floor(Math.random()*99999);
+    const script=document.createElement('script');
+    let finished=false;
+    const cleanup=()=>{
+      if(finished) return;
+      finished=true;
+      try{delete window[cb]}catch(e){}
+      try{script.remove()}catch(e){}
+    };
+    window[cb]=function(){cleanup()};
+    const params=new URLSearchParams({
+      callback:cb,
+      name:selectedUserV142,
+      device:getDeviceIdV142(),
+      action:String(action||'ping'),
+      page:currentPageV142(),
+      t:String(Date.now())
+    });
+    script.src=endpointV142+(endpointV142.includes('?')?'&':'?')+params.toString();
+    script.onerror=cleanup;
+    document.head.appendChild(script);
+    setTimeout(cleanup,8000);
+  }
+
+  function startHeartbeatV142(){
+    clearInterval(heartbeatV142);
+    if(!selectedUserV142) return;
+    heartbeatV142=setInterval(()=>{
+      if(!document.hidden) sendTrackingV142('ping');
+    },60000);
+  }
+
+  function ensureOverlayV142(){
+    let overlay=document.getElementById('mobileUserOverlayV142');
+    if(overlay) return overlay;
+
+    overlay=document.createElement('div');
+    overlay.id='mobileUserOverlayV142';
+    overlay.className='mobileUserOverlayV142';
+    overlay.hidden=true;
+    overlay.innerHTML=
+      '<div class="mobileUserCardV142" role="dialog" aria-modal="true" aria-labelledby="mobileUserTitleV142">'+
+        '<div class="mobileUserHeadV142">'+
+          '<div class="mobileUserBrandV142">CURATED EVENTS • NASHVILLE</div>'+
+          '<div class="mobileUserTitleV142" id="mobileUserTitleV142">Who are you? / ¿Quién eres?</div>'+
+          '<div class="mobileUserSubtitleV142">Select your name once. This device will remember you and record usage of the mobile route screen.</div>'+
+        '</div>'+
+        '<input id="mobileUserSearchV142" type="search" autocomplete="off" spellcheck="false" placeholder="Search your name / Busca tu nombre">'+
+        '<div class="mobileUserListV142" id="mobileUserListV142"></div>'+
+        '<div class="mobileUserFootV142">Used only to record access to this internal production route and schedule screen.</div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+
+    const search=document.getElementById('mobileUserSearchV142');
+    search?.addEventListener('input',renderNamesV142);
+    return overlay;
+  }
+
+  function renderNamesV142(){
+    const list=document.getElementById('mobileUserListV142');
+    const search=document.getElementById('mobileUserSearchV142');
+    if(!list) return;
+
+    const q=normV142(search?.value||'');
+    const shown=employeesV142.filter(name=>!q || normV142(name).includes(q));
+    if(!shown.length){
+      list.innerHTML='<div class="mobileUserEmptyV142">No employee found. / No se encontró el empleado.</div>';
+      return;
+    }
+
+    list.innerHTML=shown.map(name=>
+      '<button type="button" class="mobileUserNameV142'+
+      (normV142(name)===normV142(selectedUserV142)?' isCurrentV142':'')+
+      '" data-name="'+String(name).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+'">'+
+      String(name).replace(/&/g,'&amp;').replace(/</g,'&lt;')+
+      '</button>'
+    ).join('');
+
+    list.querySelectorAll('.mobileUserNameV142').forEach(btn=>{
+      btn.addEventListener('click',function(){
+        const name=cleanV142(btn.dataset.name);
+        if(!name) return;
+        saveUserV142(name);
+        const overlay=document.getElementById('mobileUserOverlayV142');
+        if(overlay) overlay.hidden=true;
+        const search=document.getElementById('mobileUserSearchV142');
+        if(search) search.value='';
+        sendTrackingV142('visit');
+        startHeartbeatV142();
+      });
+    });
+  }
+
+  async function openUserPickerV142(){
+    if(!isMobileV142()) return;
+    const overlay=ensureOverlayV142();
+    if(!employeesV142.length) await fetchEmployeesV142();
+    renderNamesV142();
+    overlay.hidden=false;
+    setTimeout(()=>document.getElementById('mobileUserSearchV142')?.focus(),80);
+  }
+
+  function updateUserButtonV142(){
+    const btn=document.getElementById('mobileUserButtonV142');
+    if(!btn) return;
+    btn.title=selectedUserV142 ? ('Current user: '+selectedUserV142) : 'Choose user';
+    btn.setAttribute('aria-label',selectedUserV142 ? ('Change user. Current user '+selectedUserV142) : 'Choose user');
+  }
+
+  function ensureUserButtonV142(){
+    const toolbar=document.getElementById('mobileRouteSearchV133');
+    const clear=document.getElementById('mobileRouteSearchClearV133');
+    if(!toolbar || document.getElementById('mobileUserButtonV142')) return;
+    const btn=document.createElement('button');
+    btn.id='mobileUserButtonV142';
+    btn.className='mobileUserButtonV142';
+    btn.type='button';
+    btn.textContent='ME';
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openUserPickerV142();
+    });
+    toolbar.insertBefore(btn,clear||null);
+    updateUserButtonV142();
+  }
+
+  async function bootV142(){
+    if(!isMobileV142()) return;
+    selectedUserV142=readSavedUserV142();
+    ensureUserButtonV142();
+
+    /* Load the endpoint and employee list without blocking route startup. */
+    setTimeout(refreshEndpointV142,1400);
+    setTimeout(fetchEmployeesV142,1800);
+
+    if(!selectedUserV142){
+      setTimeout(openUserPickerV142,2200);
+    }else{
+      setTimeout(()=>sendTrackingV142('visit'),2600);
+      startHeartbeatV142();
+    }
+
+    clearInterval(configTimerV142);
+    configTimerV142=setInterval(()=>{
+      if(!endpointV142) refreshEndpointV142();
+    },60000);
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden && selectedUserV142){
+      sendTrackingV142('ping');
+    }
+  });
+
+  window.addEventListener('orientationchange',function(){
+    setTimeout(()=>{
+      if(isMobileV142()) bootV142();
+      else document.getElementById('mobileUserOverlayV142')?.setAttribute('hidden','');
+    },180);
+  });
+
+  setTimeout(bootV142,900);
 })();
 </script>
 
