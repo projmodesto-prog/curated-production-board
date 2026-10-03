@@ -4960,7 +4960,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
 
 <script>
-/* V144: basic mobile QR entry control. Public routes remain public; this is not authentication. */
+/* V145: preload QR registration and share in-flight requests; keep access and save acknowledgement checks. */
 (function(){
   const USER='curated_mobile_user_v142', PHONE='curated_mobile_phone_v143', DEVICE='curated_mobile_device_v142';
   const mobile=()=>window.matchMedia('(max-width: 960px)').matches;
@@ -4971,7 +4971,8 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   const phoneNumber=v=>{const n=String(v||'').replace(/\D/g,'');return n.length===10?'+1'+n:n.length===11&&n[0]==='1'?'+'+n:''};
   let device=read(DEVICE)||('dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));write(DEVICE,device);
   let name=read(USER), phone=read(PHONE), employees=[], endpoint='', pending=true, busy=false, booted=false, activeName='';
-  let accessRows=[], accessReady=false, accessBusy=false, allowed=false;
+  let accessRows=[], accessReady=false, allowed=false, rosterPromise=null, configPromise=null, rosterCheckedAt=0, submitting=false;
+  const ROSTER_FRESH_MS=15000;
   let event=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
   function page(){return document.getElementById('weeklyScheduleSlide')?.classList.contains('isActive')?'schedule':document.getElementById('todayCrewSlide')?.classList.contains('isActive')?'crew':'routes'}
   function gate(show){
@@ -4998,6 +4999,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   async function send(){
     if(!mobile()||!allowed||!name||!phone||!endpoint||busy)return;
     busy=true;const visit=pending, id=visit?event:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    if(visit)status('Registering your entry… / Registrando tu entrada…');
     try{
       const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),12000);
       try{await fetch(endpoint,{method:'POST',mode:'no-cors',credentials:'omit',signal:controller.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({name,phone:visit?phone:'',device,action:visit?'visit':'ping',event:id,page:page()})});}catch(e){}finally{clearTimeout(timeout);}
@@ -5010,19 +5012,29 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     }catch(e){status('Connection pending. We will retry. / Conexión pendiente. Reintentaremos.');}
     finally{busy=false;}
   }
-  async function config(){
-    try{
-      const rows=await fetchExtraSheetOnce('1987654351','A1:B6',2);
-      const candidate=clean(rows.find(r=>/^WEB APP URL/i.test(clean(r[0])))?.[1]);
-      if(/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(candidate)){endpoint=candidate;send();}
-    }catch(e){}
+  function config(){
+    if(configPromise)return configPromise;
+    configPromise=(async()=>{
+      try{
+        const rows=await fetchExtraSheetOnce('1987654351','A1:B6',2);
+        const candidate=clean(rows.find(r=>/^WEB APP URL/i.test(clean(r[0])))?.[1]);
+        if(/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(candidate))endpoint=candidate;
+      }catch(e){}
+    })().finally(()=>{configPromise=null});
+    return configPromise;
   }
-  async function roster(){
-    if(accessBusy)return;accessBusy=true;
-    try{const rows=await fetchExtraSheetOnce('1987654321','A1:C200',3);accessRows=rows.slice(1);accessReady=true;employees=[...new Set(accessRows.map(r=>clean(r[0])).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
-    catch(e){accessReady=false;}
-    finally{accessBusy=false;}
-    renderNames();checkAccess();
+  function roster(useFresh=false){
+    if(rosterPromise)return rosterPromise;
+    if(useFresh&&accessReady&&Date.now()-rosterCheckedAt<ROSTER_FRESH_MS)return Promise.resolve();
+    rosterPromise=(async()=>{
+      try{
+        const rows=await fetchExtraSheetOnce('1987654321','A1:C200',3);
+        accessRows=rows.slice(1);accessReady=true;rosterCheckedAt=Date.now();
+        employees=[...new Set(accessRows.map(r=>clean(r[0])).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      }catch(e){accessReady=false;rosterCheckedAt=0}
+      renderNames();checkAccess();
+    })().finally(()=>{rosterPromise=null});
+    return rosterPromise;
   }
   function overlay(){
     let el=document.getElementById('mobileUserOverlayV142');if(el)return el;
@@ -5031,13 +5043,19 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     document.body.appendChild(el);
     document.getElementById('mobileUserSearchV142').addEventListener('input',renderNames);
     document.getElementById('mobileRegistrationForm').addEventListener('submit',async e=>{
-      e.preventDefault();const entered=phoneNumber(document.getElementById('mobilePhoneV143').value);
+      e.preventDefault();if(submitting||busy)return;const entered=phoneNumber(document.getElementById('mobilePhoneV143').value);
       if(!activeName){status('Select your name. / Selecciona tu nombre.');return;}
       if(!entered){status('Enter a valid 10-digit US phone number. / Ingresa un teléfono válido de 10 dígitos.');return;}
-      await roster();
+      submitting=true;
+      const button=e.currentTarget.querySelector('button[type="submit"]');
+      if(button){button.disabled=true;button.textContent='Registering… / Registrando…'}
+      status('Checking access… / Verificando acceso…');
+      try{
+      await Promise.all([roster(true),endpoint?Promise.resolve():config()]);
       if(!permitted(activeName)){status(accessReady?'Access not authorized. / Acceso no autorizado.':'Unable to verify access. Try again. / No se pudo verificar el acceso. Intenta de nuevo.');return;}
       name=activeName;phone=entered;write(USER,name);write(PHONE,phone);pending=true;event=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-      allowed=true;gate(true);status('Verifying registration… / Verificando registro…');if(!endpoint)await config();await send();if(!endpoint)status('Connection unavailable. Try again. / Conexión no disponible. Intenta de nuevo.');updateButton();
+      allowed=true;gate(true);status('Registering your entry… / Registrando tu entrada…');await send();if(!endpoint)status('Connection unavailable. Try again. / Conexión no disponible. Intenta de nuevo.');updateButton();
+      }finally{submitting=false;if(button){button.disabled=false;button.textContent='Enter / Entrar'}}
     });return el;
   }
   function renderNames(){
@@ -5047,11 +5065,11 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     if(!shown.length){const msg=document.createElement('div');msg.className='mobileUserEmptyV142';msg.textContent=employees.length?'No employee found. / No se encontró el empleado.':'Loading employees. Try again shortly. / Cargando empleados. Intenta en un momento.';list.appendChild(msg);}
     shown.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='mobileUserNameV142'+(n===activeName?' isCurrentV142':'');b.textContent=n;b.onclick=()=>{activeName=n;document.getElementById('mobileSelectedEmployee').textContent=n;renderNames();document.getElementById('mobilePhoneV143').focus()};list.appendChild(b)});
   }
-  function open(){if(!mobile())return;const el=overlay();activeName=name;document.getElementById('mobileSelectedEmployee').textContent=name;document.getElementById('mobilePhoneV143').value=phone;el.hidden=false;renderNames();roster();}
+  function open(){if(!mobile())return;const el=overlay();activeName=name;document.getElementById('mobileSelectedEmployee').textContent=name;document.getElementById('mobilePhoneV143').value=phone;el.hidden=false;renderNames();roster(true);}
   function updateButton(){const b=document.getElementById('mobileUserButtonV142');if(b){b.title=name?name+' • '+(pending?'Sync pending / Sincronización pendiente':'Registered / Registrado'):'Choose user / Selecciona usuario';b.setAttribute('aria-label','Change registration / Cambiar registro');}}
   function toolbar(){const host=document.getElementById('mobileRouteSearchV133');if(!host||document.getElementById('mobileUserButtonV142'))return;const b=document.createElement('button');b.id='mobileUserButtonV142';b.className='mobileUserButtonV142';b.type='button';b.textContent='ME';b.onclick=open;host.insertBefore(b,document.getElementById('mobileRouteSearchClearV133'));updateButton();}
-  function boot(){if(!mobile())return;toolbar();if(booted)return;booted=true;open();gate(true);status('Checking access… / Verificando acceso…');Promise.all([config(),roster()]).then(send);setInterval(async()=>{if(!endpoint)config();if(!document.hidden){await roster();send();}toolbar()},30000);}
-  document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await roster();send()}});window.addEventListener('resize',boot);setTimeout(boot,1800);
+  function boot(){if(!mobile())return;toolbar();if(booted)return;booted=true;open();gate(true);status('Checking access… / Verificando acceso…');Promise.all([config(),roster()]).then(()=>{if(!submitting)send()});setInterval(async()=>{if(!endpoint)config();if(!document.hidden){await roster();if(!submitting)send();}toolbar()},30000);}
+  document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await roster();if(!submitting)send()}});window.addEventListener('resize',boot);boot();
 })();
 
 </script>
