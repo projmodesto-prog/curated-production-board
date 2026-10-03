@@ -107,7 +107,8 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 .crewCell{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px}
 .crewPerson{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border-radius:5px;background:#cfd4d7;color:#111;border:1px solid #b8c0c4;font-weight:750;box-shadow:none}
 .contractFull{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:.90em;letter-spacing:-.15px;line-height:1}
-.relatedTentIcon{--rg:#1d8fe1;display:inline-flex;align-items:center;justify-content:center;width:1.08em;height:1.02em;margin-left:6px;vertical-align:-.12em;color:var(--rg);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rg) 48%,transparent));animation:relatedTentPulse 2.8s ease-in-out infinite;transform-origin:center}
+.truckWithGroup{display:inline-flex;align-items:center;justify-content:center;gap:5px;max-width:100%}
+.relatedTentIcon{--rg:#1d8fe1;display:inline-flex;align-items:center;justify-content:center;width:1.08em;height:1.02em;margin:0;vertical-align:-.12em;color:var(--rg);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rg) 48%,transparent));animation:relatedTentPulse 2.8s ease-in-out infinite;transform-origin:center}
 .relatedTentIcon svg{display:block;width:100%;height:100%;overflow:visible}
 .relatedTentIcon.rg0{--rg:#188fe8}
 .relatedTentIcon.rg1{--rg:#d84aa5}
@@ -3099,11 +3100,11 @@ function render(rows, settings = {}){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${esc(formatRouteTime(r[0]))}</td>
-      <td>${esc(r[1])}</td>
+      <td><span class="truckWithGroup">${relatedTentMarkup(relatedGroups[rowIndex])}<span>${esc(r[1])}</span></span></td>
       <td><span class="driverBadge">${esc(r[2])}</span></td>
       <td>${crewPills(r[3])}</td>
       <td>
-        <span class="contractFull">${esc(formatContracts(r[4]))}${relatedTentMarkup(relatedGroups[rowIndex])}</span>
+        <span class="contractFull">${esc(formatContracts(r[4]))}</span>
         ${r[8] ? '<span class="routeSubline routeTentLine">' + esc(r[8]) + '</span>' : ''}
       </td>
       <td>
