@@ -3120,7 +3120,7 @@ function parseSheetResponse(resp, sheetName){
       cellValue(cells[6]),
       cellValue(cells[7]),
       cellValue(cells[11]), // L: TENT SIZE / TYPE
-      cellValue(cells[12])  // M: ADDRESS
+      cellValue(cells[13])  // N: ADDRESS
     ];
   }).filter(r => r.some(v => String(v).trim() !== ''));
 
@@ -3169,7 +3169,7 @@ function fetchSheetOnce(sheetName){
       ...(gid
         ? ['gid=' + encodeURIComponent(gid)]
         : ['sheet=' + encodeURIComponent(sheetName)]),
-      'range=' + encodeURIComponent('A1:M100'),
+      'range=' + encodeURIComponent('A1:N100'),
       'headers=1',
       'tq=' + encodeURIComponent('select *'),
       'tqx=' + encodeURIComponent(tqx),
