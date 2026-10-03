@@ -4943,10 +4943,14 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
     dates.sort((a,b)=>a-b);
     const scheduleMonday=mondayOfWeekV138(dates[0]);
     const currentMonday=mondayOfWeekV138(new Date());
+    const nextMonday=new Date(currentMonday);
+    nextMonday.setDate(nextMonday.getDate()+7);
 
-    /* Require the first dated schedule column to actually belong to this Monday-Sunday week. */
-    return sameDateV138(scheduleMonday,currentMonday) &&
-      dates.some(d=>sameDateV138(d,currentMonday));
+    /* Mobile may publish the upcoming Monday-Sunday schedule before the week starts.
+       Show either the current week or the immediately upcoming week; older/far-future
+       schedules remain hidden. */
+    return sameDateV138(scheduleMonday,currentMonday) ||
+      sameDateV138(scheduleMonday,nextMonday);
   }
 
   function ensureUnavailablePanelV138(){
