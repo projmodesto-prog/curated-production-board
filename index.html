@@ -5248,6 +5248,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 #mobileRoutesV147{display:block;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:6px!important;-webkit-overflow-scrolling:touch;color:#101416;font-family:Arial,Helvetica,sans-serif}
 .m147-controls,.m147-days{display:flex;gap:5px;margin:0 0 6px;flex-wrap:wrap}
 #mobileRoutesV147 button{min-height:36px;border:1px solid #4f7382;border-radius:7px;padding:7px 9px;background:#0f2d38;color:#fff;font:800 11px/1.2 Arial,sans-serif;cursor:pointer}
+#mobileRoutesV147 button[hidden]{display:none!important}
 #mobileRoutesV147 button[aria-pressed=true]{background:#1773b8;border-color:#5aa2df}
 .m147-days{flex-wrap:nowrap;overflow:auto;padding-bottom:3px}.m147-days button{flex-shrink:0;min-height:34px;font-size:10px}
 .m147-status{font-size:10px;color:#566970;line-height:1.4;margin:5px 1px}.m147-title{font-size:12px;font-weight:850;margin:7px 1px}
@@ -5297,23 +5298,24 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  }
  function render(){
   if(!host)return;
-  const n=name(),chosen=items.filter(x=>day<0||x.idx===day);
+  const enabled=items.filter(x=>!x.stale&&isEnabled(x.data.settings||{}));
+  if(day>=0&&!enabled.some(x=>x.idx===day))day=-1;
+  const n=name(),chosen=enabled.filter(x=>day<0||x.idx===day);
   const matched=chosen.flatMap(item=>(item.data.rows||[]).filter(r=>mode==='all'||(n&&member(r,n))).map(row=>({item,row})));
   host.querySelector('.m147-title').textContent=(mode==='mine'?'Mis rutas / My routes':'Todas las rutas / All routes')+(mode==='mine'&&n?' · '+n:'');
-  host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas en esta selección. / No routes in this selection.')+'</div>';
+  host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas activadas con SHOW DAY = YES en esta selección. / No routes enabled with SHOW DAY = YES in this selection.')+'</div>';
   host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
-  host.querySelectorAll('[data-day]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.day)===day)));
+  host.querySelectorAll('[data-day]').forEach(b=>{const i=Number(b.dataset.day);b.setAttribute('aria-pressed',String(i===day));b.hidden=i>=0&&!enabled.some(x=>x.idx===i);});
   const dates=chosen.map(x=>x.data.syncedAt).filter(Boolean),oldest=dates.length?Math.min(...dates):0;
-  const failed=chosen.some(x=>x.stale);
-  host.querySelector('.m147-status').textContent=(busy?'Actualizando… / Refreshing… ':failed?'Copia guardada · Sin conexión / Saved copy · Offline. ':'')+(oldest?'Datos cargados / Data loaded: '+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):'Actualización aún no verificada / Update not yet verified')+'.';
+  const failed=items.some(x=>x.stale);
+  host.querySelector('.m147-status').textContent=(busy?'Actualizando… / Refreshing… ':failed?'No se pudo verificar algunos días; sus rutas están ocultas. / Some days could not be verified; their routes are hidden. ':'')+(oldest?'Datos cargados / Data loaded: '+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):'Actualización aún no verificada / Update not yet verified')+'.';
   const refresh=host.querySelector('[data-refresh]');refresh.disabled=busy;
  }
  async function load(){
   if(busy||!mobile())return;busy=true;render();
   const settled=await Promise.allSettled(DAY_SHEETS.map(async(sheet,idx)=>{
    try{return {idx,name:sheet,data:await fetchSheetOnce(sheet),stale:false}}
-   catch(e){const prior=items.find(x=>x.idx===idx);let cache;try{cache=JSON.parse(localStorage.getItem('mvix_routes_'+sheet)||'null')}catch(e){}
-    return {idx,name:sheet,data:prior?.data||cache||{rows:[],settings:{}},stale:true};}
+   catch(e){return {idx,name:sheet,data:{rows:[],settings:{}},stale:true};}
   }));
   items=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);busy=false;render();
  }
