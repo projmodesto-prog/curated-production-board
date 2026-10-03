@@ -5242,21 +5242,27 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 <style>
 #mobileRoutesV147{display:none}
 @media(max-width:960px){
-#mobileRoutesV147{display:block;color:#eef7f7;padding:12px 0 26px;font-family:Arial,sans-serif}
 #tableWrap #routeTable,#mobileWeekRouteResultsV134,#mobileRouteDayBarV137,#mobileRouteSearchInputV133,#mobileRouteSearchClearV133,#mobileRouteTodayV134{display:none!important}
-#tableWrap{background:#0b222b!important;display:flex!important;flex-direction:column!important}
-#mobileRoutesV147{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px!important;-webkit-overflow-scrolling:touch}
-#mobileRouteSearchV133{flex-wrap:wrap!important;flex-shrink:0!important}
-.m147-controls,.m147-days{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-#mobileRoutesV147 button,#mobileRoutesV147 a{min-height:44px;border:1px solid #507079;border-radius:12px;padding:10px 14px;background:#18343d;color:#fff;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
-#mobileRoutesV147 button[aria-pressed=true]{background:#c6a670;color:#10242c;border-color:#c6a670;font-weight:700}
-.m147-days{flex-wrap:nowrap;overflow:auto;padding-bottom:5px}.m147-days button{flex-shrink:0}
-.m147-status{font-size:13px;color:#bed1d4;line-height:1.5}.m147-title{font-size:21px;font-weight:700;margin:12px 0}
-.m147-card{background:#102b34;border:1px solid #42606a;border-radius:18px;padding:16px;margin:14px 0;overflow-wrap:anywhere}
-.m147-head{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:20px}.m147-date{color:#d5bc91;font-size:14px;margin-bottom:12px}
-.m147-team{font-size:16px;line-height:1.6;margin:12px 0;white-space:pre-wrap}.m147-order{font-size:18px;font-weight:700;white-space:normal;overflow:visible;line-height:1.5}
-.m147-tents{font-size:15px;white-space:pre-wrap;line-height:1.6;margin:8px 0;color:#d3e3e6}.m147-stop{border-top:1px solid #42606a;padding:14px 0;line-height:1.6}.m147-stop strong{display:block;font-size:18px}.m147-stop a{margin-top:8px}
-.m147-note{background:#ede0bf;color:#1d292d;border-radius:12px;padding:14px;white-space:pre-wrap;line-height:1.5;margin-top:12px}
+#tableWrap{background:#edf1f2!important;display:flex!important;flex-direction:column!important}
+#tableWrap #mobileRouteSearchV133{display:flex!important;justify-content:flex-end;gap:6px;flex-shrink:0!important}
+#mobileRoutesV147{display:block;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:6px!important;-webkit-overflow-scrolling:touch;color:#101416;font-family:Arial,Helvetica,sans-serif}
+.m147-controls,.m147-days{display:flex;gap:5px;margin:0 0 6px;flex-wrap:wrap}
+#mobileRoutesV147 button{min-height:36px;border:1px solid #4f7382;border-radius:7px;padding:7px 9px;background:#0f2d38;color:#fff;font:800 11px/1.2 Arial,sans-serif;cursor:pointer}
+#mobileRoutesV147 button[aria-pressed=true]{background:#1773b8;border-color:#5aa2df}
+.m147-days{flex-wrap:nowrap;overflow:auto;padding-bottom:3px}.m147-days button{flex-shrink:0;min-height:34px;font-size:10px}
+.m147-status{font-size:10px;color:#566970;line-height:1.4;margin:5px 1px}.m147-title{font-size:12px;font-weight:850;margin:7px 1px}
+.m147-card{display:grid;grid-template-columns:24% 24% 52%;border:1px solid #9eafb6;border-radius:8px;background:#f7f9fa;color:#101416;box-shadow:0 2px 7px rgba(0,0,0,.18);margin:0 0 8px;overflow:hidden;overflow-wrap:anywhere}
+.m147-card:nth-child(even){background:#edf2f4}
+.m147-date{grid-column:1 / -1;background:#0a2029;color:#fff;min-height:30px;display:flex;align-items:center;padding:6px 8px;font-size:10px;font-weight:850;letter-spacing:.35px}
+.m147-field{padding:6px;border-right:1px solid #d0dadd;border-bottom:1px solid #d0dadd;font-size:12px;font-weight:800;line-height:1.35;min-width:0;white-space:pre-wrap}
+.m147-field b{display:block;font-size:8px;letter-spacing:.35px;color:#566970;margin-bottom:3px}.m147-field:nth-child(4){border-right:0}
+.m147-driver{grid-column:1 / 3}.m147-contract{grid-column:3;border-right:0}.m147-crew,.m147-location{grid-column:1 / -1;border-right:0}
+.m147-tents{display:block;color:#285d87;font-size:11px;margin-top:4px;white-space:pre-wrap;font-weight:800}
+.m147-statusBadge{display:inline-block;padding:4px 7px;border-radius:5px;font-size:11px;line-height:1.1;background:#d5dadc;color:#121212}.m147-delivery{background:#93ddb0;color:#102418}.m147-pickup{background:#78bdf2;color:#0b2030}
+.m147-driver span{display:inline-block;background:#111;color:#fff;padding:5px 8px;border-radius:5px}.m147-crew span{display:inline-block;background:#cfd4d7;border:1px solid #b8c0c4;padding:4px 7px;border-radius:5px;margin:2px}
+.m147-details{grid-column:1 / -1;font-size:12px}.m147-details summary{list-style:none;cursor:pointer;min-height:38px;display:flex;align-items:center;justify-content:space-between;padding:7px 8px;background:#e1e9ec;color:#173743;font-weight:850}.m147-details summary::-webkit-details-marker{display:none}.m147-details summary::after{content:'＋';background:#0a2029;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px}.m147-details[open] summary::after{content:'−';background:#1773b8}
+.m147-stop{border-top:1px solid #d0dadd;padding:10px 8px;line-height:1.5;white-space:pre-wrap}.m147-stop strong{display:block}.m147-stop a{min-height:40px;display:inline-flex;align-items:center;background:#0f2d38;color:#fff;padding:8px 11px;border:1px solid #4f7382;border-radius:7px;margin-top:6px;text-decoration:none;font-weight:800}
+.m147-note{grid-column:1 / -1;background:#fff1cc;color:#293238;border-top:1px solid #d0dadd;padding:9px 8px;font-size:12px;line-height:1.4;white-space:pre-wrap}.m147-empty{padding:20px 8px;font-size:12px}
 }
 </style>
 <script>
@@ -5280,14 +5286,21 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
    const order=orders.length===stopCount?orders[i]:'';
    return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Abrir mapa / Open map ↗</a>':'')+'</div>';
   }).join('');
-  return '<article class="m147-card"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div><div class="m147-head"><span>'+safe(formatRouteTime(row[0]))+'</span><span>'+safe(row[1]||'')+'</span></div><div>'+safe(row[6]||'')+'</div><div class="m147-team"><b>Chofer / Driver:</b> '+safe(row[2])+'<br><b>Equipo / Crew:</b> '+safe(row[3]||'—')+'</div><div class="m147-order">'+safe(formatContracts(row[4]))+'</div>'+(row[8]?'<div class="m147-tents">'+safe(row[8])+'</div>':'')+stops+(String(row[7]||'').trim()?'<div class="m147-note"><b>Instrucciones / Instructions</b><br>'+safe(row[7])+'</div>':'')+'</article>';
+  const statusClass=/pick|p\/u/i.test(row[6]||'')?'m147-pickup':/del/i.test(row[6]||'')?'m147-delivery':'';
+  const crew=String(row[3]||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>'<span>'+safe(x)+'</span>').join(' ');
+  return '<article class="m147-card"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div>'+
+   '<div class="m147-field"><b>TIME / HORA</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>TRUCK</b>'+safe(row[1]||'—')+'</div><div class="m147-field"><b>STATUS</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
+   '<div class="m147-field m147-driver"><b>DRIVER / CHOFER</b><span>'+safe(row[2])+'</span></div><div class="m147-field m147-contract"><b>CONTRACT / IE</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
+   '<div class="m147-field m147-crew"><b>CREW / EQUIPO</b>'+crew+'</div><div class="m147-field m147-location"><b>LOCATION / LUGAR</b>'+locations.map((loc,i)=>(i+1)+'. '+safe(loc)).join('<br>')+'</div>'+
+   (String(row[7]||'').trim()?'<div class="m147-note"><b>Instrucciones / Instructions</b><br>'+safe(row[7])+'</div>':'')+
+   '<details class="m147-details"><summary>Ver paradas y mapas / Stops &amp; maps</summary>'+stops+'</details></article>';
  }
  function render(){
   if(!host)return;
   const n=name(),chosen=items.filter(x=>day<0||x.idx===day);
   const matched=chosen.flatMap(item=>(item.data.rows||[]).filter(r=>mode==='all'||(n&&member(r,n))).map(row=>({item,row})));
   host.querySelector('.m147-title').textContent=(mode==='mine'?'Mis rutas / My routes':'Todas las rutas / All routes')+(mode==='mine'&&n?' · '+n:'');
-  host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-card">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas en esta selección. / No routes in this selection.')+'</div>';
+  host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas en esta selección. / No routes in this selection.')+'</div>';
   host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
   host.querySelectorAll('[data-day]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.day)===day)));
   const dates=chosen.map(x=>x.data.syncedAt).filter(Boolean),oldest=dates.length?Math.min(...dates):0;
@@ -5316,7 +5329,5 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  window.addEventListener('resize',boot);boot();
 })();
 </script>
-
-
 
 </body></html>
