@@ -5276,7 +5276,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  const name=()=>{try{return localStorage.getItem('curated_mobile_user_v142')||''}catch(e){return ''}};
  const member=(r,n)=>[r[2],...String(r[3]||'').split(',')].some(x=>norm(x)===norm(n)||(norm(n).split(/\s+/).length>1&&norm(x)===alias(n)));
  const lines=v=>String(v||'').split(/\r?\n/).map(x=>x.replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
- let mode='mine',day=-1,items=[],busy=false,lastName='',host;
+ let mode='all',day=-1,items=[],busy=false,lastName='',host;
  const labels=['Lun / Mon','Mar / Tue','Mié / Wed','Jue / Thu','Vie / Fri','Sáb / Sat','Dom / Sun'];
  function card(item,row){
   const locations=lines(row[5]),addresses=lines(row[9]);
@@ -5302,7 +5302,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   if(day>=0&&!enabled.some(x=>x.idx===day))day=-1;
   const n=name(),chosen=enabled.filter(x=>day<0||x.idx===day);
   const matched=chosen.flatMap(item=>(item.data.rows||[]).filter(r=>mode==='all'||(n&&member(r,n))).map(row=>({item,row})));
-  host.querySelector('.m147-title').textContent=(mode==='mine'?'Mis rutas / My routes':'Todas las rutas / All routes')+(mode==='mine'&&n?' · '+n:'');
+  host.querySelector('.m147-title').textContent=(mode==='mine'?'Mis rutas / My routes':'Rutas de la semana / Weekly routes')+(mode==='mine'&&n?' · '+n:'');
   host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas activadas con SHOW DAY = YES en esta selección. / No routes enabled with SHOW DAY = YES in this selection.')+'</div>';
   host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
   host.querySelectorAll('[data-day]').forEach(b=>{const i=Number(b.dataset.day);b.setAttribute('aria-pressed',String(i===day));b.hidden=i>=0&&!enabled.some(x=>x.idx===i);});
@@ -5322,10 +5322,10 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  function boot(){
   if(!mobile()||host)return;const wrap=document.getElementById('tableWrap');if(!wrap)return;
   host=document.createElement('section');host.id='mobileRoutesV147';host.setAttribute('aria-label','Rutas móviles / Mobile routes');
-  host.innerHTML='<div class="m147-controls"><button data-mode="mine">Mis rutas / My routes</button><button data-mode="all">Todas / All</button><button data-refresh>Actualizar / Refresh ↻</button></div><div class="m147-days"><button data-day="-1">Semana / Week</button>'+labels.map((l,i)=>'<button data-day="'+i+'">'+l+'</button>').join('')+'</div><div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div><div class="m147-list"></div>';
+  host.innerHTML='<div class="m147-controls"><button data-mode="mine">Mis rutas / My routes</button><button data-mode="all">Rutas semanales / Weekly routes</button><button data-refresh>Actualizar / Refresh ↻</button></div><div class="m147-days"><button data-day="-1">Semana / Week</button>'+labels.map((l,i)=>'<button data-day="'+i+'">'+l+'</button>').join('')+'</div><div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div><div class="m147-list"></div>';
   wrap.appendChild(host);host.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.mode){mode=b.dataset.mode;render()}else if(b.dataset.day!==undefined){day=Number(b.dataset.day);render()}else if(b.hasAttribute('data-refresh'))load()});
   // Personal matching follows the registration stored by the existing access gate.
-  lastName=name();load();setInterval(()=>{if(!mobile())return;const current=name();if(current!==lastName){lastName=current;mode='mine';render()}},1500);
+  lastName=name();load();setInterval(()=>{if(!mobile())return;const current=name();if(current!==lastName){lastName=current;render()}},1500);
   setInterval(()=>{if(!document.hidden)load()},60000);
  }
  window.addEventListener('resize',boot);boot();
