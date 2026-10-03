@@ -5074,4 +5074,51 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
 </script>
 
+
+<style>
+/* V146: keep IE numbers and tent details stacked inside mobile contract fields. */
+@media (max-width:960px) and (orientation:portrait){
+  #routesBody tr{
+    grid-template-rows:minmax(28px,auto) minmax(30px,auto) minmax(30px,auto) minmax(36px,auto) minmax(34px,auto)!important;
+  }
+  .mobileWeekRouteCardV134{
+    grid-template-rows:minmax(32px,auto) minmax(28px,auto) minmax(30px,auto) minmax(36px,auto) minmax(36px,auto)!important;
+  }
+  #routesBody tr td:nth-child(5),
+  .mobileWeekRouteFieldV134.contract{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    justify-content:center!important;
+    gap:3px!important;
+    white-space:normal!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  #routesBody tr td:nth-child(5) .contractFull,
+  .mobileWeekRouteFieldV134.contract > span{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    max-height:none!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    overflow-wrap:anywhere!important;
+    -webkit-line-clamp:unset!important;
+    line-height:1.15!important;
+  }
+  #routesBody tr td:nth-child(5) .routeTentLine,
+  .mobileWeekRouteFieldV134.contract .mobileRouteSublineV145{
+    display:block!important;
+    width:100%!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    line-height:1.15!important;
+    margin-top:0!important;
+  }
+}
+</style>
 </body></html>
