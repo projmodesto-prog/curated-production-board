@@ -3285,6 +3285,7 @@ function fetchSheetOnce(sheetName){
       clearTimeout(failTimer);
       try{
         const parsed = parseSheetResponse(resp, sheetName);
+        parsed.syncedAt = Date.now();
         try { localStorage.setItem('mvix_routes_' + sheetName, JSON.stringify(parsed)); } catch(e) {}
         resolve(parsed);
       }catch(e){
@@ -5238,4 +5239,84 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   }
 }
 </style>
+<style>
+#mobileRoutesV147{display:none}
+@media(max-width:960px){
+#mobileRoutesV147{display:block;color:#eef7f7;padding:12px 0 26px;font-family:Arial,sans-serif}
+#tableWrap #routeTable,#mobileWeekRouteResultsV134,#mobileRouteDayBarV137,#mobileRouteSearchInputV133,#mobileRouteSearchClearV133,#mobileRouteTodayV134{display:none!important}
+#tableWrap{background:#0b222b!important;display:flex!important;flex-direction:column!important}
+#mobileRoutesV147{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px!important;-webkit-overflow-scrolling:touch}
+#mobileRouteSearchV133{flex-wrap:wrap!important;flex-shrink:0!important}
+.m147-controls,.m147-days{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#mobileRoutesV147 button,#mobileRoutesV147 a{min-height:44px;border:1px solid #507079;border-radius:12px;padding:10px 14px;background:#18343d;color:#fff;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+#mobileRoutesV147 button[aria-pressed=true]{background:#c6a670;color:#10242c;border-color:#c6a670;font-weight:700}
+.m147-days{flex-wrap:nowrap;overflow:auto;padding-bottom:5px}.m147-days button{flex-shrink:0}
+.m147-status{font-size:13px;color:#bed1d4;line-height:1.5}.m147-title{font-size:21px;font-weight:700;margin:12px 0}
+.m147-card{background:#102b34;border:1px solid #42606a;border-radius:18px;padding:16px;margin:14px 0;overflow-wrap:anywhere}
+.m147-head{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:20px}.m147-date{color:#d5bc91;font-size:14px;margin-bottom:12px}
+.m147-team{font-size:16px;line-height:1.6;margin:12px 0;white-space:pre-wrap}.m147-order{font-size:18px;font-weight:700;white-space:normal;overflow:visible;line-height:1.5}
+.m147-tents{font-size:15px;white-space:pre-wrap;line-height:1.6;margin:8px 0;color:#d3e3e6}.m147-stop{border-top:1px solid #42606a;padding:14px 0;line-height:1.6}.m147-stop strong{display:block;font-size:18px}.m147-stop a{margin-top:8px}
+.m147-note{background:#ede0bf;color:#1d292d;border-radius:12px;padding:14px;white-space:pre-wrap;line-height:1.5;margin-top:12px}
+}
+</style>
+<script>
+/* V147 — mobile group cards, personal routes, per-stop navigation, fresh-data status. */
+(function(){
+ const mobile=()=>matchMedia('(max-width:960px)').matches;
+ const safe=v=>esc(String(v??''));
+ const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/^LEAD:\s*/i,'').trim().toLowerCase();
+ const alias=v=>{const a=norm(v).split(/\s+/);return a.length>1?a[0]+' '+a[a.length-1][0]:a[0]};
+ const name=()=>{try{return localStorage.getItem('curated_mobile_user_v142')||''}catch(e){return ''}};
+ const member=(r,n)=>[r[2],...String(r[3]||'').split(',')].some(x=>norm(x)===norm(n)||(norm(n).split(/\s+/).length>1&&norm(x)===alias(n)));
+ const lines=v=>String(v||'').split(/\r?\n/).map(x=>x.replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
+ let mode='mine',day=-1,items=[],busy=false,lastName='',host;
+ const labels=['Lun / Mon','Mar / Tue','Mié / Wed','Jue / Thu','Vie / Fri','Sáb / Sat','Dom / Sun'];
+ function card(item,row){
+  const locations=lines(row[5]),addresses=lines(row[9]);
+  const orders=String(row[4]||'').match(/\d{6}/g)||[];
+  const stopCount=Math.max(locations.length,addresses.length,1);
+  const stops=Array.from({length:stopCount},(_,i)=>{
+   const loc=locations[i]||'Parada / Stop '+(i+1),address=addresses[i]||'';
+   const order=orders.length===stopCount?orders[i]:'';
+   return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Abrir mapa / Open map ↗</a>':'')+'</div>';
+  }).join('');
+  return '<article class="m147-card"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div><div class="m147-head"><span>'+safe(formatRouteTime(row[0]))+'</span><span>'+safe(row[1]||'')+'</span></div><div>'+safe(row[6]||'')+'</div><div class="m147-team"><b>Chofer / Driver:</b> '+safe(row[2])+'<br><b>Equipo / Crew:</b> '+safe(row[3]||'—')+'</div><div class="m147-order">'+safe(formatContracts(row[4]))+'</div>'+(row[8]?'<div class="m147-tents">'+safe(row[8])+'</div>':'')+stops+(String(row[7]||'').trim()?'<div class="m147-note"><b>Instrucciones / Instructions</b><br>'+safe(row[7])+'</div>':'')+'</article>';
+ }
+ function render(){
+  if(!host)return;
+  const n=name(),chosen=items.filter(x=>day<0||x.idx===day);
+  const matched=chosen.flatMap(item=>(item.data.rows||[]).filter(r=>mode==='all'||(n&&member(r,n))).map(row=>({item,row})));
+  host.querySelector('.m147-title').textContent=(mode==='mine'?'Mis rutas / My routes':'Todas las rutas / All routes')+(mode==='mine'&&n?' · '+n:'');
+  host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-card">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas en esta selección. / No routes in this selection.')+'</div>';
+  host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+  host.querySelectorAll('[data-day]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.day)===day)));
+  const dates=chosen.map(x=>x.data.syncedAt).filter(Boolean),oldest=dates.length?Math.min(...dates):0;
+  const failed=chosen.some(x=>x.stale);
+  host.querySelector('.m147-status').textContent=(busy?'Actualizando… / Refreshing… ':failed?'Copia guardada · Sin conexión / Saved copy · Offline. ':'')+(oldest?'Datos cargados / Data loaded: '+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):'Actualización aún no verificada / Update not yet verified')+'.';
+  const refresh=host.querySelector('[data-refresh]');refresh.disabled=busy;
+ }
+ async function load(){
+  if(busy||!mobile())return;busy=true;render();
+  const settled=await Promise.allSettled(DAY_SHEETS.map(async(sheet,idx)=>{
+   try{return {idx,name:sheet,data:await fetchSheetOnce(sheet),stale:false}}
+   catch(e){const prior=items.find(x=>x.idx===idx);let cache;try{cache=JSON.parse(localStorage.getItem('mvix_routes_'+sheet)||'null')}catch(e){}
+    return {idx,name:sheet,data:prior?.data||cache||{rows:[],settings:{}},stale:true};}
+  }));
+  items=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);busy=false;render();
+ }
+ function boot(){
+  if(!mobile()||host)return;const wrap=document.getElementById('tableWrap');if(!wrap)return;
+  host=document.createElement('section');host.id='mobileRoutesV147';host.setAttribute('aria-label','Rutas móviles / Mobile routes');
+  host.innerHTML='<div class="m147-controls"><button data-mode="mine">Mis rutas / My routes</button><button data-mode="all">Todas / All</button><button data-refresh>Actualizar / Refresh ↻</button></div><div class="m147-days"><button data-day="-1">Semana / Week</button>'+labels.map((l,i)=>'<button data-day="'+i+'">'+l+'</button>').join('')+'</div><div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div><div class="m147-list"></div>';
+  wrap.appendChild(host);host.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.mode){mode=b.dataset.mode;render()}else if(b.dataset.day!==undefined){day=Number(b.dataset.day);render()}else if(b.hasAttribute('data-refresh'))load()});
+  // Personal matching follows the registration stored by the existing access gate.
+  lastName=name();load();setInterval(()=>{if(!mobile())return;const current=name();if(current!==lastName){lastName=current;mode='mine';render()}},1500);
+  setInterval(()=>{if(!document.hidden)load()},60000);
+ }
+ window.addEventListener('resize',boot);boot();
+})();
+</script>
+
+
+
 </body></html>
