@@ -3046,6 +3046,39 @@ function relatedTentMarkup(group){
   '</span>';
 }
 
+
+/* Fit the complete desktop route content before distributing spare space. */
+function fitRouteTableToContent(){
+  if(window.matchMedia('(max-width:960px) and (orientation:portrait)').matches) return;
+  const wrap=document.getElementById('tableWrap');
+  const table=document.getElementById('routeTable');
+  const body=document.getElementById('routesBody');
+  if(!wrap || !table || !body || !body.rows.length) return;
+  table.style.height='auto';
+  const rows=Array.from(body.rows);
+  rows.forEach(row=>row.style.setProperty('height','auto','important'));
+  const elements=Array.from(body.querySelectorAll('td,td *'));
+  elements.forEach(el=>{
+    if(el.dataset.routeFitFont){
+      el.style.fontSize=el.dataset.routeFitFont+'px';
+    }else{
+      el.dataset.routeFitFont=parseFloat(getComputedStyle(el).fontSize);
+    }
+  });
+  const limit=wrap.clientHeight-2;
+  let scale=1;
+  for(let step=0;step<80 && table.offsetHeight>limit;step++){
+    scale*=.96;
+    elements.forEach(el=>el.style.setProperty('font-size',(Number(el.dataset.routeFitFont)*scale)+'px','important'));
+  }
+  const spare=Math.max(0,limit-table.offsetHeight);
+  rows.forEach(row=>{
+    const height=row.offsetHeight+spare/rows.length;
+    row.style.setProperty('height',height+'px','important');
+  });
+}
+window.addEventListener('resize',()=>requestAnimationFrame(fitRouteTableToContent));
+
 function render(rows, settings = {}){
   const body = document.getElementById('routesBody');
   const wrap = document.getElementById('tableWrap');
@@ -3123,6 +3156,8 @@ function render(rows, settings = {}){
     if(portraitMobile) tr.style.removeProperty('height');
     else tr.style.setProperty('height', rowHeight, 'important');
   });
+
+  fitRouteTableToContent();
 
   // Message bar: DASHBOARD SLIDES is primary; daily I/J settings are fallback only.
   renderMessageBar(messageFeedRows, settings);
