@@ -3109,26 +3109,30 @@ function parseSheetResponse(resp, sheetName){
     // V118: column K is a text-only mirror of CONTRACT (column E).
     // This avoids Google Visualization type inference turning mixed/multiple
     // contract values into blanks. Fall back to E for older sheet copies.
-    const contractDisplay = cellValue(cells[10]).trim() || cellValue(cells[4]).trim();
+    // Reorganized daily route sheet:
+    // A TIME, B TRUCK, C DRIVER, D CREW, E CONTRACT,
+    // F TENT SIZE / TYPE, G LOCATION, H ADDRESS, I STATUS, J SECOND NOTE,
+    // N SETTING KEY, O SETTING VALUE, P hidden CONTRACT DISPLAY helper.
+    const contractDisplay = cellValue(cells[15]).trim() || cellValue(cells[4]).trim();
     return [
       cellValue(cells[0]),
       cellValue(cells[1]),
       cellValue(cells[2]),
       cellValue(cells[3]),
       contractDisplay,
-      cellValue(cells[5]),
       cellValue(cells[6]),
-      cellValue(cells[7]),
-      cellValue(cells[11]), // L: TENT SIZE / TYPE
-      cellValue(cells[12])  // M: ADDRESS
+      cellValue(cells[8]),
+      cellValue(cells[9]),
+      cellValue(cells[5]), // F: TENT SIZE / TYPE
+      cellValue(cells[7])  // H: ADDRESS
     ];
   }).filter(r => r.some(v => String(v).trim() !== ''));
 
   const settings = {};
   tableRows.forEach(row => {
     const cells = row.c || [];
-    const key = cellValue(cells[8]).trim().toUpperCase();
-    const value = cellValue(cells[9]).trim();
+    const key = cellValue(cells[13]).trim().toUpperCase();
+    const value = cellValue(cells[14]).trim();
 
     if (key === 'ANNOUNCEMENT') settings.announcement = value;
     if (key === 'SAFETY TITLE') settings.safetyTitle = value;
@@ -3169,7 +3173,7 @@ function fetchSheetOnce(sheetName){
       ...(gid
         ? ['gid=' + encodeURIComponent(gid)]
         : ['sheet=' + encodeURIComponent(sheetName)]),
-      'range=' + encodeURIComponent('A1:M100'),
+      'range=' + encodeURIComponent('A1:P100'),
       'headers=1',
       'tq=' + encodeURIComponent('select *'),
       'tqx=' + encodeURIComponent(tqx),
