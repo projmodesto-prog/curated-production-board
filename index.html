@@ -107,6 +107,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 .crewCell{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px}
 .crewPerson{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border-radius:5px;background:#cfd4d7;color:#111;border:1px solid #b8c0c4;font-weight:750;box-shadow:none}
 .contractFull{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:.90em;letter-spacing:-.15px;line-height:1}
+.relatedTentIcon{--rg:#1d8fe1;display:inline-flex;align-items:center;justify-content:center;width:1.08em;height:1.02em;margin-left:6px;vertical-align:-.12em;color:var(--rg);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rg) 48%,transparent));animation:relatedTentPulse 2.8s ease-in-out infinite;transform-origin:center}
+.relatedTentIcon svg{display:block;width:100%;height:100%;overflow:visible}
+.relatedTentIcon.rg0{--rg:#188fe8}
+.relatedTentIcon.rg1{--rg:#d84aa5}
+.relatedTentIcon.rg2{--rg:#18a95b}
+.relatedTentIcon.rg3{--rg:#db8b18}
+.relatedTentIcon.rg4{--rg:#7b61d1}
+.relatedTentIcon.rg5{--rg:#0da4a7}
+@keyframes relatedTentPulse{0%,100%{opacity:.72;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.relatedTentIcon{animation:none!important;opacity:1!important;transform:none!important}}
 .locationFull{display:block;white-space:normal;overflow-wrap:anywhere}
 .routeSubline{display:block;margin-top:5px;font-size:.72em;line-height:1.08;font-weight:850;white-space:normal;overflow:hidden;text-overflow:ellipsis}
 .routeTentLine{color:#174f8a}
@@ -2969,6 +2979,72 @@ function routeStatusBadges(value){
   return '<div class="statusBadgeWrap">' + badges.join('') + '</div>';
 }
 
+function relatedRouteKey(value){
+  return String(value || '')
+    .toUpperCase()
+    .replace(/\bIE\s*#?\s*/g,'')
+    .replace(/[^A-Z0-9]/g,'');
+}
+
+function buildRelatedRouteGroups(rows){
+  const list = Array.isArray(rows) ? rows : [];
+  const byContract = new Map();
+  const byAddress = new Map();
+
+  list.forEach((r,idx)=>{
+    const contractKey = relatedRouteKey(r && r[4]);
+    const addressKey = relatedRouteKey(r && r[9]);
+
+    if(contractKey){
+      if(!byContract.has(contractKey)) byContract.set(contractKey,[]);
+      byContract.get(contractKey).push(idx);
+    }
+    if(addressKey && addressKey.length >= 6){
+      if(!byAddress.has(addressKey)) byAddress.set(addressKey,[]);
+      byAddress.get(addressKey).push(idx);
+    }
+  });
+
+  const candidates=[];
+  for(const [key,indexes] of byContract){
+    if(indexes.length>=3) candidates.push({kind:'contract',key,indexes:[...indexes]});
+  }
+  for(const [key,indexes] of byAddress){
+    if(indexes.length>=3) candidates.push({kind:'address',key,indexes:[...indexes]});
+  }
+
+  const seenSets=new Set();
+  const unique=candidates
+    .sort((a,b)=>(Math.min(...a.indexes)-Math.min(...b.indexes)) || (a.kind==='contract'?-1:1))
+    .filter(g=>{
+      const sig=[...g.indexes].sort((a,b)=>a-b).join(',');
+      if(seenSets.has(sig)) return false;
+      seenSets.add(sig);
+      return true;
+    });
+
+  const rowGroups=Array(list.length).fill(null);
+  unique.forEach((g,groupIndex)=>{
+    g.indexes.forEach(i=>{
+      if(!rowGroups[i]) rowGroups[i]={groupIndex,count:g.indexes.length,kind:g.kind};
+    });
+  });
+  return rowGroups;
+}
+
+function relatedTentMarkup(group){
+  if(!group) return '';
+  const colorClass='rg'+(group.groupIndex%6);
+  const why=group.kind==='address' ? 'same address' : 'same contract';
+  const title=group.count+' related routes • '+why;
+  return '<span class="relatedTentIcon '+colorClass+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+
+    '<svg viewBox="0 0 24 20" role="img" aria-hidden="true">'+
+      '<path d="M2.4 18 12 3l9.6 15H2.4Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/>'+
+      '<path d="M12 3v15M7.7 18 12 10.7 16.3 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '</svg>'+
+  '</span>';
+}
+
 function render(rows, settings = {}){
   const body = document.getElementById('routesBody');
   const wrap = document.getElementById('tableWrap');
@@ -3017,8 +3093,9 @@ function render(rows, settings = {}){
   else wrap.removeAttribute('data-compact');
 
   const visibleRows = rows.slice(0,50);
+  const relatedGroups = buildRelatedRouteGroups(visibleRows);
 
-  visibleRows.forEach(r => {
+  visibleRows.forEach((r,rowIndex) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${esc(formatRouteTime(r[0]))}</td>
@@ -3026,7 +3103,7 @@ function render(rows, settings = {}){
       <td><span class="driverBadge">${esc(r[2])}</span></td>
       <td>${crewPills(r[3])}</td>
       <td>
-        <span class="contractFull">${esc(formatContracts(r[4]))}</span>
+        <span class="contractFull">${esc(formatContracts(r[4]))}${relatedTentMarkup(relatedGroups[rowIndex])}</span>
         ${r[8] ? '<span class="routeSubline routeTentLine">' + esc(r[8]) + '</span>' : ''}
       </td>
       <td>
