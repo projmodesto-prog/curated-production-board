@@ -5335,4 +5335,58 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 
 
 
+
+<style>
+/* V149: tap-to-read messages on touch phones only; original cards preserved. */
+@media (max-width:960px) and (pointer:coarse){
+ #messageBar .tickerItem[role=button]{cursor:pointer}
+ #messageBar .tickerItem[role=button]:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+ #mobileMessageDialogV149{position:fixed;width:calc(100vw - 30px);max-width:520px;max-height:80dvh;border:1px solid #5b7984;border-radius:16px;padding:22px;background:#0b222b;color:#f4f5f3;font-family:Arial,Helvetica,sans-serif;box-shadow:0 12px 60px #0008;overflow:auto}
+ #mobileMessageDialogV149::backdrop{background:#000b}
+ #mobileMessageDialogV149 h2{font-size:19px;line-height:1.3;margin:0 0 16px;color:#c6a670;overflow-wrap:anywhere}
+ #mobileMessageDialogV149 p{font-size:18px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 22px}
+ #mobileMessageDialogV149 button{min-height:44px;padding:10px 18px;font-size:16px;font-weight:700;background:#a9e8c4;color:#102418;border:0;border-radius:8px;cursor:pointer}
+}
+</style>
+<script>
+(function(){
+ const phone=window.matchMedia('(max-width:960px) and (pointer:coarse)');
+ const bar=document.getElementById('messageBar');if(!bar)return;
+ let modal=null,observer=null;
+ const originals=new Map();
+ function mark(){
+  if(!phone.matches)return;
+  bar.querySelectorAll('.tickerItem').forEach(slot=>{
+   if(!originals.has(slot))originals.set(slot,{role:slot.getAttribute('role'),tabindex:slot.getAttribute('tabindex'),popup:slot.getAttribute('aria-haspopup'),label:slot.getAttribute('aria-label')});
+   slot.setAttribute('role','button');slot.tabIndex=0;slot.setAttribute('aria-haspopup','dialog');
+   slot.setAttribute('aria-label',(slot.querySelector('.tickerTag')?.textContent||'Message')+' — Ver mensaje completo / Read full message');
+  });
+ }
+ function open(slot){
+  if(!phone.matches||!modal)return;
+  modal.querySelector('h2').textContent=slot.querySelector('.tickerTag')?.textContent||'Mensaje / Message';
+  modal.querySelector('p').textContent=slot.querySelector('.tickerCopy')?.textContent||'';
+  if(!modal.open)modal.showModal();
+ }
+ function sync(){
+  if(phone.matches){
+   if(!modal){
+    modal=document.createElement('dialog');modal.id='mobileMessageDialogV149';modal.setAttribute('aria-labelledby','mobileMessageTitleV149');
+    modal.innerHTML='<h2 id="mobileMessageTitleV149"></h2><p></p><button type="button">Cerrar / Close</button>';
+    document.body.appendChild(modal);modal.querySelector('button').onclick=()=>modal.close();
+    modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close();}});
+    observer=new MutationObserver(mark);observer.observe(bar,{childList:true,subtree:true,characterData:true});
+   }
+   mark();
+  }else if(modal){
+   observer.disconnect();observer=null;if(modal.open)modal.close();modal.remove();modal=null;
+   originals.forEach((saved,slot)=>{[['role',saved.role],['tabindex',saved.tabindex],['aria-haspopup',saved.popup],['aria-label',saved.label]].forEach(([key,value])=>{if(value===null)slot.removeAttribute(key);else slot.setAttribute(key,value);});});originals.clear();
+  }
+ }
+ bar.addEventListener('click',e=>{if(!phone.matches)return;const slot=e.target.closest('.tickerItem');if(slot)open(slot);});
+ bar.addEventListener('keydown',e=>{if(!phone.matches)return;if(e.key==='Enter'||e.key===' '){const slot=e.target.closest('.tickerItem');if(slot){e.preventDefault();open(slot);}}});
+ window.addEventListener('resize',sync);sync();
+})();
+</script>
+
 </body></html>
