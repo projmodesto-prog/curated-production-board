@@ -5333,64 +5333,6 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 </script>
 
 
-<style>
-/* V148 — fixed message titles, slow overflow motion and tap-to-read. */
-#messageBar .tickerItem{position:relative!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:3px!important;padding:4px 10px 4px 21px!important;cursor:pointer}
-#messageBar .tickerItem::before{position:absolute;left:7px;top:9px;width:6px;height:6px}
-#messageBar .tickerTag{display:block!important;flex:0 0 auto!important;height:auto!important;min-width:0!important;max-width:100%!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;font-size:9px!important;line-height:1.15!important;white-space:nowrap!important;letter-spacing:.7px!important}
-#messageBar .tickerCopy{display:block!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;-webkit-line-clamp:unset!important;font-size:13px!important;line-height:1.2!important}
-#messageBar .tickerMotion{display:inline-block;white-space:nowrap;transform:translateX(0)}
-#messageBar .tickerCopy.isMovingV148{text-overflow:clip!important}
-#messageBar .isMovingV148 .tickerMotion{animation:messageWalkV148 var(--walk-duration,18s) linear infinite}
-#messageBar .tickerItem:hover .tickerMotion,#messageBar .tickerItem:focus-visible .tickerMotion{animation-play-state:paused}
-#messageBar .tickerItem:focus-visible{outline:2px solid #fff;outline-offset:-3px}
-@keyframes messageWalkV148{0%,10%{transform:translateX(0)}90%,100%{transform:translateX(calc(-1 * var(--walk-distance,0px)))}}
-#messageDialogV148{position:fixed;width:min(520px,calc(100vw - 30px));max-height:80dvh;border:1px solid #5b7984;border-radius:16px;padding:22px;background:#0b222b;color:#f4f5f3;font-family:Arial,Helvetica,sans-serif;box-shadow:0 12px 60px #0008;overflow:auto}
-#messageDialogV148::backdrop{background:#000b}
-#messageDialogV148 h2{font-size:19px;line-height:1.3;margin:0 0 16px;color:#c6a670;overflow-wrap:anywhere}
-#messageDialogV148 p{font-size:18px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 22px}
-#messageDialogV148 button{min-height:44px;padding:10px 18px;font-size:16px;font-weight:700;background:#a9e8c4;color:#102418;border:0;border-radius:8px;cursor:pointer}
-@media(max-width:960px) and (orientation:portrait){
- #messageBar .tickerItem{padding:4px 5px 4px 12px!important;gap:4px!important}
- #messageBar .tickerItem::before{left:4px;top:8px;width:4px;height:4px}
- #messageBar .tickerTag{font-size:7px!important;letter-spacing:.4px!important}
- #messageBar .tickerCopy{font-size:9px!important;line-height:1.25!important}
-}
-@media(prefers-reduced-motion:reduce){#messageBar .isMovingV148 .tickerMotion{animation:none!important}}
-</style>
-<script>
-(function(){
- const bar=document.getElementById('messageBar');if(!bar)return;
- const modal=document.createElement('dialog');modal.id='messageDialogV148';modal.setAttribute('aria-labelledby','messageDialogTitleV148');
- modal.innerHTML='<h2 id="messageDialogTitleV148"></h2><p></p><button type="button">Cerrar / Close</button>';
- document.body.appendChild(modal);modal.querySelector('button').onclick=()=>modal.close();
- modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close();}});
- let queued=false;
- function decorate(){
-  queued=false;
-  bar.querySelectorAll('.tickerItem').forEach(slot=>{
-   const copy=slot.querySelector('.tickerCopy'),title=slot.querySelector('.tickerTag');if(!copy)return;
-   slot.setAttribute('role','button');slot.tabIndex=0;slot.setAttribute('aria-haspopup','dialog');slot.setAttribute('aria-label',(title?.textContent||'Message')+' — Ver mensaje completo / Read full message');
-   let motion=copy.querySelector('.tickerMotion');
-   if(!motion){motion=document.createElement('span');motion.className='tickerMotion';motion.textContent=copy.textContent;copy.replaceChildren(motion);}
-   const distance=Math.max(0,motion.scrollWidth-copy.clientWidth);
-   copy.classList.toggle('isMovingV148',distance>2);
-   copy.style.setProperty('--walk-distance',distance+'px');
-   copy.style.setProperty('--walk-duration',Math.max(14,distance/25+5)+'s');
-  });
- }
- function schedule(){if(!queued){queued=true;requestAnimationFrame(decorate);}}
- function open(slot){
-  modal.querySelector('h2').textContent=slot.querySelector('.tickerTag')?.textContent||'Message / Mensaje';
-  modal.querySelector('p').textContent=slot.querySelector('.tickerCopy')?.textContent||'';
-  if(!modal.open)modal.showModal();
- }
- bar.addEventListener('click',e=>{const slot=e.target.closest('.tickerItem');if(slot)open(slot);});
- bar.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const slot=e.target.closest('.tickerItem');if(slot){e.preventDefault();open(slot);}}});
- new MutationObserver(schedule).observe(bar,{childList:true,subtree:true,characterData:true});
- if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(bar);
- window.addEventListener('resize',schedule);decorate();
-})();
-</script>
+
 
 </body></html>
