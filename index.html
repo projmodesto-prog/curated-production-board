@@ -5285,7 +5285,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   const stops=Array.from({length:stopCount},(_,i)=>{
    const loc=locations[i]||'Parada / Stop '+(i+1),address=addresses[i]||'';
    const order=orders.length===stopCount?orders[i]:'';
-   return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Abrir mapa / Open map ↗</a>':'')+'</div>';
+   return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<details class="m147-map-choice"><summary>Mapa / Map</summary><div class="m147-map-options"><div>¿Dónde quieres abrir la dirección?<br>Where would you like to open it?</div><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?q='+encodeURIComponent(address)+'">Apple Maps</a> <a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Google Maps</a></div></details>':'')+'</div>';
   }).join('');
   const statusClass=/pick|p\/u/i.test(row[6]||'')?'m147-pickup':/del/i.test(row[6]||'')?'m147-delivery':'';
   const crew=String(row[3]||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>'<span>'+safe(x)+'</span>').join(' ');
@@ -5389,4 +5389,15 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 })();
 </script>
 
+<style>
+/* Mobile per-stop map provider chooser. */
+@media(max-width:960px){
+.m147-stop .m147-map-choice{margin-top:6px;white-space:normal}
+.m147-stop .m147-map-choice>summary{display:inline-flex;justify-content:center;min-height:44px;padding:8px 12px;background:#0f2d38;color:#fff;border:1px solid #4f7382;border-radius:7px;font-size:14px;cursor:pointer;list-style:none}
+.m147-stop .m147-map-choice>summary::after{content:none}
+.m147-map-options{padding:10px 0 0;font-size:14px;line-height:1.5}
+.m147-stop .m147-map-options a{min-height:44px;font-size:14px}
+.m147-stop .m147-map-choice summary:focus-visible,.m147-map-options a:focus-visible{outline:3px solid #1773b8;outline-offset:3px}
+}
+</style>
 </body></html>
