@@ -3472,6 +3472,7 @@ async function updateNextVisibleLabel(){
 
 function startCountdown(){
   clearInterval(countdownInterval);
+  if(window.matchMedia && window.matchMedia('(max-width:960px)').matches) return;
   countdownInterval = setInterval(() => {
     if (activeDayIndex < 0 && !activeExtraSlide) return;
     if (slideDeadlineMs > 0){
@@ -3483,12 +3484,14 @@ function startCountdown(){
 
 function scheduleRotation(){
   clearTimeout(rotationTimeout);
+  if(window.matchMedia && window.matchMedia('(max-width:960px)').matches) return;
   rotationTimeout = setTimeout(async () => {
     await advanceRotationStep();
   }, currentSlideSeconds * 1000);
 }
 
 async function advanceRotationStep(){
+  if(window.matchMedia && window.matchMedia('(max-width:960px)').matches) return;
   if(rotationInProgress) return;
   rotationInProgress=true;
   clearTimeout(rotationTimeout);
@@ -5306,6 +5309,25 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 .m147-stop{border-top:1px solid #d0dadd;padding:10px 8px;line-height:1.5;white-space:pre-wrap}.m147-stop strong{display:block}.m147-stop a{min-height:40px;display:inline-flex;align-items:center;background:#0f2d38;color:#fff;padding:8px 11px;border:1px solid #4f7382;border-radius:7px;margin-top:6px;text-decoration:none;font-weight:800}
 .m147-note{grid-column:1 / -1;background:#fff1cc;color:#293238;border-top:1px solid #d0dadd;padding:9px 8px;font-size:12px;line-height:1.4;white-space:pre-wrap}.m147-empty{padding:20px 8px;font-size:12px}
 }
+
+@media(max-width:960px){
+ #mobileRoutesV147 .m147-pinned{position:sticky;top:0;z-index:5;background:#edf1f2;padding:5px 0 7px;box-shadow:0 3px 6px #10182025}
+ #mobileRoutesV147 .m147-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;overflow:visible;flex-wrap:nowrap;padding-bottom:3px}
+ #mobileRoutesV147 .m147-days button{min-width:0;min-height:55px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 1px;font-size:10px}
+ #mobileRoutesV147 .m147-days strong{font-size:12px}
+ #mobileRoutesV147 .m147-days small{font-size:9px;opacity:.8}
+ #mobileRoutesV147 .m147-days button.m147-today{outline:2px solid #b17d32;outline-offset:-3px}
+ #mobileRoutesV147 .m147-search{display:flex;gap:5px;margin:0 0 6px;align-items:center}
+ #mobileRoutesV147 .m147-search input{flex:1;min-width:0;height:38px;border:1px solid #8ea2aa;border-radius:7px;padding:7px 8px;font-size:16px;background:white;color:#111}
+ #mobileRoutesV147 .m147-search button{min-height:38px}
+ #mobileRoutesV147 .m147-weekHeading{display:flex;align-items:center;justify-content:space-between;margin:0 0 5px;font-size:11px;font-weight:850;color:#344c57}
+ #mobileRoutesV147 .m147-weekHeading button{min-height:30px}
+ #mobileRoutesV147 .m147-personBtn{min-height:29px;max-width:100%;margin:2px 4px 2px 0;padding:4px 7px;overflow-wrap:anywhere;text-align:left}
+ #mobileRoutesV147 .m147-driver .m147-personBtn{background:#111;color:white}
+ #mobileRoutesV147 .m147-crew .m147-personBtn{background:#cfd4d7;color:#15191b;border-color:#b8c0c4}
+ #mobileRoutesV147 .m147-personClear{display:block;margin:3px 0 8px;background:#266283}
+ #mobileRoutesV147 .m147-summary{padding:3px 1px 7px;color:#40545d;font-size:11px}
+}
 </style>
 <script>
 /* V147 — mobile group cards, personal routes, per-stop navigation, fresh-data status. */
@@ -5317,9 +5339,30 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  const name=()=>{try{return localStorage.getItem('curated_mobile_user_v142')||''}catch(e){return ''}};
  const member=(r,n)=>[r[2],...String(r[3]||'').split(',')].some(x=>norm(x)===norm(n)||(norm(n).split(/\s+/).length>1&&norm(x)===alias(n)));
  const lines=v=>String(v||'').split(/\r?\n/).map(x=>x.replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
- let mode='all',day=-1,items=[],busy=false,lastName='',host;
- const labels=['Lun / Mon','Mar / Tue','Mié / Wed','Jue / Thu','Vie / Fri','Sáb / Sat','Dom / Sun'];
- function card(item,row){
+ 
+ const labels=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+ function todayIndex(){
+  try{const wd=new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:'America/Chicago'}).format(new Date());return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(wd);}
+  catch(e){return (new Date().getDay()+6)%7;}
+ }
+ function weekDate(i){
+  const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date());
+  const v=t=>Number(p.find(x=>x.type===t)?.value||1),d=new Date(v('year'),v('month')-1,v('day'),12);
+  d.setDate(d.getDate()-todayIndex()+i);return (d.getMonth()+1)+'/'+d.getDate();
+ }
+ function routeDate(item,i){
+  const raw=String(item?.data?.settings?.routeDate||''),m=raw.match(/(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?/);
+  if(m)return Number(m[1])+'/'+Number(m[2]);
+  const d=new Date(raw);return Number.isNaN(d.getTime())?weekDate(i):(d.getMonth()+1)+'/'+d.getDate();
+ }
+ let mode='all',day=todayIndex(),items=[],busy=false,lastName='',host,query='',person='',previous=null;
+ function clearQuery(){query='';const input=host?.querySelector('.m147-search input');if(input)input.value='';}
+ function selectPerson(n){
+  if(person&&norm(person)===norm(n)){person='';if(previous){day=previous.day;mode=previous.mode;}previous=null;}
+  else{if(!person)previous={day,mode};person=n;day=-1;mode='all';clearQuery();}
+  render();host.scrollTop=0;
+ }
+function card(item,row,rowIndex){
   const locations=lines(row[5]),addresses=lines(row[9]);
   const orders=String(row[4]||'').match(/\d{6}/g)||[];
   const stopCount=Math.max(locations.length,addresses.length,1);
@@ -5329,30 +5372,49 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
    return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<details class="m147-map-choice"><summary>Mapa / Map</summary><div class="m147-map-options"><div>¿Dónde quieres abrir la dirección?<br>Where would you like to open it?</div><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?q='+encodeURIComponent(address)+'">Apple Maps</a> <a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Google Maps</a></div></details>':'')+'</div>';
   }).join('');
   const statusClass=/pick|p\/u/i.test(row[6]||'')?'m147-pickup':/del/i.test(row[6]||'')?'m147-delivery':'';
-  const crew=String(row[3]||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>'<span>'+safe(x)+'</span>').join(' ');
-  return '<article class="m147-card"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div>'+
+  const crew=String(row[3]||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).map(x=>'<button type="button" class="m147-personBtn" data-person="'+safe(x)+'">'+safe(x)+'</button>').join(' ');
+  return '<article class="m147-card" data-key="'+item.idx+'-'+rowIndex+'"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div>'+
    '<div class="m147-field"><b>TIME / HORA</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>TRUCK</b>'+safe(row[1]||'—')+'</div><div class="m147-field"><b>STATUS</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
-   '<div class="m147-field m147-driver"><b>DRIVER / CHOFER</b><span>'+safe(row[2])+'</span></div><div class="m147-field m147-contract"><b>CONTRACT / IE</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
+   '<div class="m147-field m147-driver"><b>DRIVER / CHOFER</b>'+(row[2]?'<button type="button" class="m147-personBtn" data-person="'+safe(row[2])+'">'+safe(row[2])+'</button>':'—')+'</div><div class="m147-field m147-contract"><b>CONTRACT / IE</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
    '<div class="m147-field m147-crew"><b>CREW / EQUIPO</b>'+crew+'</div><div class="m147-field m147-location"><b>LOCATION / LUGAR</b>'+locations.map((loc,i)=>(i+1)+'. '+safe(loc)).join('<br>')+'</div>'+
    (String(row[7]||'').trim()?'<div class="m147-note"><b>Instrucciones / Instructions</b><br>'+safe(row[7])+'</div>':'')+
    '<details class="m147-details"><summary>Ver paradas y mapas / Stops &amp; maps</summary>'+stops+'</details></article>';
  }
+ 
  function render(){
   if(!host)return;
-  const enabled=items.filter(x=>!x.stale&&isEnabled(x.data.settings||{}));
-  if(day>=0&&!enabled.some(x=>x.idx===day))day=-1;
-  const n=name(),chosen=enabled.filter(x=>day<0||x.idx===day);
-  const matched=chosen.flatMap(item=>(item.data.rows||[]).filter(r=>mode==='all'||(n&&member(r,n))).map(row=>({item,row})));
-  host.querySelector('.m147-title').textContent=(mode==='mine'?'Mis rutas / My routes':'Rutas de la semana / Weekly routes')+(mode==='mine'&&n?' · '+n:'');
-  host.querySelector('.m147-list').innerHTML=matched.length?matched.map(x=>card(x.item,x.row)).join(''):'<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':mode==='mine'?'No tienes rutas en esta selección. / No routes assigned in this selection.':'No hay rutas activadas con SHOW DAY = YES en esta selección. / No routes enabled with SHOW DAY = YES in this selection.')+'</div>';
-  host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
-  host.querySelectorAll('[data-day]').forEach(b=>{const i=Number(b.dataset.day);b.setAttribute('aria-pressed',String(i===day));b.hidden=i>=0&&!enabled.some(x=>x.idx===i);});
-  const dates=chosen.map(x=>x.data.syncedAt).filter(Boolean),oldest=dates.length?Math.min(...dates):0;
-  const failed=items.some(x=>x.stale);
-  host.querySelector('.m147-status').textContent=(busy?'Actualizando… / Refreshing… ':failed?'No se pudo verificar algunos días; sus rutas están ocultas. / Some days could not be verified; their routes are hidden. ':'')+(oldest?'Datos cargados / Data loaded: '+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):'Actualización aún no verificada / Update not yet verified')+'.';
-  const refresh=host.querySelector('[data-refresh]');refresh.disabled=busy;
+  const enabled=items.filter(x=>!x.stale&&isEnabled(x.data.settings||{})),q=norm(query),n=name();
+  const selected=enabled.filter(x=>q||day<0||x.idx===day);
+  const matched=selected.flatMap(item=>(item.data.rows||[]).map((row,rowIndex)=>({item,row,rowIndex}))).filter(x=>
+   (mode!=='mine'||(n&&member(x.row,n)))&&(!person||member(x.row,person))&&
+   (!q||norm([x.item.name,x.item.data.settings?.routeDate,...x.row].join(' ')).includes(q))
+  );
+  const list=host.querySelector('.m147-list'),scroll=host.scrollTop;
+  const opened=new Set(Array.from(list.querySelectorAll('.m147-card')).filter(el=>el.querySelector('.m147-details[open]')).map(el=>el.dataset.key));
+  host.querySelector('.m147-title').textContent=q?'Búsqueda semanal / Weekly search':
+   person?'Horario semanal / Weekly schedule · '+person:mode==='mine'?'Mis rutas / My routes'+(n?' · '+n:''):
+   day<0?'Rutas semanales / Weekly routes':labels[day]+' · '+routeDate(enabled.find(x=>x.idx===day),day);
+  host.querySelector('.m147-summary').textContent=matched.length+' rutas / routes'+(q?' · Buscando en los 7 días / Searching all days':'');
+  list.innerHTML=matched.length?matched.map(x=>card(x.item,x.row,x.rowIndex)).join(''):
+   '<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':q?'No se encontraron rutas / No matches':
+   mode==='mine'?'No tienes rutas en esta selección / No personal routes':person?'No hay rutas para este empleado / No routes for this employee':
+   'No hay rutas publicadas para este día (SHOW DAY = YES) / No published routes')+'</div>';
+  list.querySelectorAll('.m147-card').forEach(el=>{if(opened.has(el.dataset.key)){const d=el.querySelector('.m147-details');if(d)d.open=true;}});
+  host.scrollTop=scroll;
+  host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode&&!person)));
+  const week=host.querySelector('[data-day="-1"]');week.setAttribute('aria-pressed',String(day===-1&&!q));
+  host.querySelectorAll('.m147-days [data-day]').forEach(b=>{
+   const i=Number(b.dataset.day),it=enabled.find(x=>x.idx===i),count=it?(it.data.rows||[]).length:0;
+   b.innerHTML='<span>'+labels[i]+'</span><strong>'+routeDate(it,i)+'</strong><small>'+count+'</small>';
+   b.setAttribute('aria-pressed',String(i===day&&!q));b.classList.toggle('m147-today',i===todayIndex());
+   b.setAttribute('aria-label',labels[i]+' '+routeDate(it,i)+'; '+count+' rutas');
+  });
+  const clear=host.querySelector('[data-person-clear]');clear.hidden=!person;clear.textContent='✕ '+person+' · Ver todas / Show all';
+  const dates=enabled.map(x=>x.data.syncedAt).filter(Boolean),oldest=dates.length?Math.min(...dates):0,failed=items.some(x=>x.stale);
+  host.querySelector('.m147-status').textContent=(busy?'Actualizando… / Refreshing… ':failed?'Algunos días no se verificaron / Some days could not be verified. ':'')+(oldest?'Datos cargados / Data loaded: '+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):'Actualización aún no verificada / Not verified yet')+'.';
+  host.querySelector('[data-refresh]').disabled=busy;
  }
- async function load(){
+async function load(){
   if(busy||!mobile())return;busy=true;render();
   const settled=await Promise.allSettled(DAY_SHEETS.map(async(sheet,idx)=>{
    try{return {idx,name:sheet,data:await fetchSheetOnce(sheet),stale:false}}
@@ -5360,16 +5422,35 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   }));
   items=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);busy=false;render();
  }
+ 
  function boot(){
-  if(!mobile()||host)return;const wrap=document.getElementById('tableWrap');if(!wrap)return;
+  if(!mobile()||host)return;
+  const wrap=document.getElementById('tableWrap');if(!wrap)return;
   host=document.createElement('section');host.id='mobileRoutesV147';host.setAttribute('aria-label','Rutas móviles / Mobile routes');
-  host.innerHTML='<div class="m147-controls"><button data-mode="mine">Mis rutas / My routes</button><button data-mode="all">Rutas semanales / Weekly routes</button><button data-refresh>Actualizar / Refresh ↻</button></div><div class="m147-days"><button data-day="-1">Semana / Week</button>'+labels.map((l,i)=>'<button data-day="'+i+'">'+l+'</button>').join('')+'</div><div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div><div class="m147-list"></div>';
-  wrap.appendChild(host);host.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.mode){mode=b.dataset.mode;render()}else if(b.dataset.day!==undefined){day=Number(b.dataset.day);render()}else if(b.hasAttribute('data-refresh'))load()});
-  // Personal matching follows the registration stored by the existing access gate.
-  lastName=name();load();setInterval(()=>{if(!mobile())return;const current=name();if(current!==lastName){lastName=current;render()}},1500);
+  host.innerHTML='<div class="m147-pinned">'+
+   '<div class="m147-controls"><button data-mode="mine">Mis rutas</button><button data-mode="all">Todas las rutas</button><button data-refresh>Actualizar ↻</button></div>'+
+   '<div class="m147-search"><input type="search" placeholder="Buscar nombre, ruta, horario, IE#..." aria-label="Buscar rutas en toda la semana" autocomplete="off"><button type="button" data-today>HOY</button><button type="button" data-clear aria-label="Borrar búsqueda">×</button></div>'+
+   '<div class="m147-weekHeading"><span>SEMANA / WEEK · LUN–DOM</span><button type="button" data-day="-1">Ver semana</button></div>'+
+   '<div class="m147-days">'+labels.map((l,i)=>'<button type="button" data-day="'+i+'">'+l+'</button>').join('')+'</div></div>'+
+   '<div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div>'+
+   '<button type="button" class="m147-personClear" data-person-clear hidden></button><div class="m147-summary"></div><div class="m147-list"></div>';
+  wrap.appendChild(host);
+  host.addEventListener('input',e=>{if(e.target.matches('.m147-search input')){query=e.target.value;render();host.scrollTop=0;}});
+  host.addEventListener('click',e=>{
+   const b=e.target.closest('button');if(!b||!host.contains(b))return;
+   if(b.dataset.person){selectPerson(b.dataset.person);return;}
+   if(b.hasAttribute('data-person-clear')){if(person)selectPerson(person);return;}
+   if(b.dataset.mode){mode=b.dataset.mode;person='';previous=null;day=mode==='mine'?-1:todayIndex();clearQuery();render();host.scrollTop=0;}
+   else if(b.dataset.day!==undefined){day=Number(b.dataset.day);clearQuery();render();host.scrollTop=0;}
+   else if(b.hasAttribute('data-today')){day=todayIndex();mode='all';person='';previous=null;clearQuery();render();host.scrollTop=0;}
+   else if(b.hasAttribute('data-clear')){clearQuery();render();host.scrollTop=0;}
+   else if(b.hasAttribute('data-refresh'))load();
+  });
+  lastName=name();load();
+  setInterval(()=>{if(!mobile())return;const n=name();if(n!==lastName){lastName=n;render()}},1500);
   setInterval(()=>{if(!document.hidden)load()},60000);
  }
- window.addEventListener('resize',boot);boot();
+window.addEventListener('resize',boot);boot();
 })();
 </script>
 
