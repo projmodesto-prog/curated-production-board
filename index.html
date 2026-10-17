@@ -5286,6 +5286,8 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
 <style>
 #mobileRoutesV147{display:none}
 @media(max-width:960px){
+/* V150: the seven-day V147 navigator replaces the older route day strip. */
+#tableWrap #mobileRouteDayBarV137{display:none!important}
 #tableWrap #routeTable,#mobileWeekRouteResultsV134,#mobileRouteDayBarV137,#mobileRouteSearchInputV133,#mobileRouteSearchClearV133,#mobileRouteTodayV134{display:none!important}
 #tableWrap{background:#edf1f2!important;display:flex!important;flex-direction:column!important}
 #tableWrap #mobileRouteSearchV133{display:flex!important;justify-content:flex-end;gap:6px;flex-shrink:0!important}
@@ -5428,10 +5430,10 @@ async function load(){
   const wrap=document.getElementById('tableWrap');if(!wrap)return;
   host=document.createElement('section');host.id='mobileRoutesV147';host.setAttribute('aria-label','Rutas móviles / Mobile routes');
   host.innerHTML='<div class="m147-pinned">'+
-   '<div class="m147-controls"><button data-mode="mine">Mis rutas</button><button data-mode="all">Todas las rutas</button><button data-refresh>Actualizar ↻</button></div>'+
-   '<div class="m147-search"><input type="search" placeholder="Buscar nombre, ruta, horario, IE#..." aria-label="Buscar rutas en toda la semana" autocomplete="off"><button type="button" data-today>HOY</button><button type="button" data-clear aria-label="Borrar búsqueda">×</button></div>'+
    '<div class="m147-weekHeading"><span>SEMANA / WEEK · LUN–DOM</span><button type="button" data-day="-1">Ver semana</button></div>'+
-   '<div class="m147-days">'+labels.map((l,i)=>'<button type="button" data-day="'+i+'">'+l+'</button>').join('')+'</div></div>'+
+   '<div class="m147-days">'+labels.map((l,i)=>'<button type="button" data-day="'+i+'">'+l+'</button>').join('')+'</div>'+
+   '<div class="m147-controls"><button data-mode="mine">Mis rutas</button><button data-mode="all">Todas las rutas</button><button data-refresh>Actualizar ↻</button></div>'+
+   '<div class="m147-search"><input type="search" placeholder="Buscar nombre, ruta, horario, IE#..." aria-label="Buscar rutas en toda la semana" autocomplete="off"><button type="button" data-today>HOY</button><button type="button" data-clear aria-label="Borrar búsqueda">×</button></div></div>'+
    '<div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div>'+
    '<button type="button" class="m147-personClear" data-person-clear hidden></button><div class="m147-summary"></div><div class="m147-list"></div>';
   wrap.appendChild(host);
