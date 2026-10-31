@@ -1873,6 +1873,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 @media(max-width:960px){.mobileUserCardV142{overflow-y:auto!important}.mobileUserHeadV142,#mobileRegistrationForm,.mobileUserFootV142{flex-shrink:0}.mobileUserListV142{min-height:80px!important;max-height:25vh!important;flex-shrink:0}#mobileRegistrationForm button{text-align:center!important;background:#a9e8c4!important;color:#102418!important}}
 </style>
 <style>@media(max-width:960px){html.qrAccessLockedV144 #viewport{visibility:hidden!important}html.qrAccessLockedV144 .mobileUserOverlayV142{background:#030c10!important}}</style>
+<style id="schedule-moon-clean">.scheduleMoon{font-size:.72em;line-height:1;display:inline-block;vertical-align:baseline;margin-right:.12em}</style>
 </head>
 <body>
 <!-- V113 FINAL: Sheet-driven weather/messages/photos. Photos display only when SHOW=YES. No demo/preview images. -->
@@ -2427,6 +2428,10 @@ function todayShiftHighlightIndex(){
   return 2+mondayZero;
 }
 
+function scheduleMoonMarkup(value){
+  return esc(String(value||'')).split('🌙').join('<span class="scheduleMoon" aria-label="Late night">🌙</span>');
+}
+
 function renderWeeklyScheduleSlide(data){
   if(!data || !data.headers || !data.rows) return;
   const subtitle=document.getElementById('weeklySlideSubtitle');
@@ -2454,7 +2459,7 @@ function renderWeeklyScheduleSlide(data){
       if(i===todayCol) classes.push('todayCol');
       const hl=weeklyHighlightFor(employee,i);
       if(hl) classes.push(hl);
-      return '<td'+(classes.length?' class="'+classes.join(' ')+'"':'')+'>'+esc(String(v||''))+'</td>';
+      return '<td'+(classes.length?' class="'+classes.join(' ')+'"':'')+'>'+scheduleMoonMarkup(v)+'</td>';
     }).join('');
     return '<tr'+(groupStart?' class="groupStart"':'')+'>'+cells+'</tr>';
   }).join('');
@@ -2481,7 +2486,7 @@ function renderTodayCrewSlide(data){
     return '<tr'+(groupStart?' class="groupStart"':'')+'>'+
       '<td'+(nameClass?' class="'+nameClass+'"':'')+'>'+esc(x.employee)+'</td>'+
       '<td'+(jobClass?' class="'+jobClass+'"':'')+'>'+esc(x.job)+'</td>'+
-      '<td'+(shiftClass?' class="'+shiftClass+'"':'')+'>'+esc(x.shift)+'</td>'+
+      '<td'+(shiftClass?' class="'+shiftClass+'"':'')+'>'+scheduleMoonMarkup(x.shift)+'</td>'+
       '</tr>';
   }).join('');
 }
