@@ -5360,6 +5360,8 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  const member=(r,n)=>[r[2],...String(r[3]||'').split(',')].some(x=>norm(x)===norm(n)||(norm(n).split(/\s+/).length>1&&norm(x)===alias(n)));
  const lines=v=>String(v||'').split(/\r?\n/).map(x=>x.replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
  
+ let language;try{language=localStorage.getItem('curated_mobile_language')||'es'}catch(e){language='es'}
+ const t=(es,en)=>language==='en'?en:es;
  const labels=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
  function todayIndex(){
   try{const wd=new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:'America/Chicago'}).format(new Date());return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(wd);}
@@ -5387,22 +5389,27 @@ function card(item,row,rowIndex){
   const orders=String(row[4]||'').match(/\d{6}/g)||[];
   const stopCount=Math.max(locations.length,addresses.length,1);
   const stops=Array.from({length:stopCount},(_,i)=>{
-   const loc=locations[i]||'Parada / Stop '+(i+1),address=addresses[i]||'';
+   const loc=locations[i]||''+t("Parada ","Stop ")+''+(i+1),address=addresses[i]||'';
    const order=orders.length===stopCount?orders[i]:'';
-   return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<details class="m147-map-choice"><summary>Mapa / Map</summary><div class="m147-map-options"><div>¿Dónde quieres abrir la dirección?<br>Where would you like to open it?</div><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?q='+encodeURIComponent(address)+'">Apple Maps</a> <a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Google Maps</a></div></details>':'')+'</div>';
+   return '<div class="m147-stop"><strong>'+ (i+1)+'. '+safe(loc)+'</strong>'+ (order?'<div class="m147-order">IE# '+safe(order)+'</div>':'')+'<div>'+safe(address)+'</div>'+(address?'<details class="m147-map-choice"><summary>'+t("Mapa","Map")+'</summary><div class="m147-map-options"><div>'+t("¿Dónde quieres abrir la dirección?","Where would you like to open it?")+'</div><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?q='+encodeURIComponent(address)+'">Apple Maps</a> <a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'">Google Maps</a></div></details>':'')+'</div>';
   }).join('');
   const statusClass=/pick|p\/u/i.test(row[6]||'')?'m147-pickup':/del/i.test(row[6]||'')?'m147-delivery':'';
   const crew=String(row[3]||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).map(x=>'<button type="button" class="m147-personBtn" data-person="'+safe(x)+'">'+safe(x)+'</button>').join(' ');
   return '<article class="m147-card" data-key="'+item.idx+'-'+rowIndex+'"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div>'+
-   '<div class="m147-field"><b>TIME / HORA</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>TRUCK</b>'+safe(row[1]||'—')+'</div><div class="m147-field"><b>STATUS</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
-   '<div class="m147-field m147-driver"><b>DRIVER / CHOFER</b>'+(row[2]?'<button type="button" class="m147-personBtn" data-person="'+safe(row[2])+'">'+safe(row[2])+'</button>':'—')+'</div><div class="m147-field m147-contract"><b>CONTRACT / IE</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
-   '<div class="m147-field m147-crew"><b>CREW / EQUIPO</b>'+crew+'</div><div class="m147-field m147-location"><b>LOCATION / LUGAR</b>'+locations.map((loc,i)=>(i+1)+'. '+safe(loc)).join('<br>')+'</div>'+
-   (String(row[7]||'').trim()?'<div class="m147-note"><b>Instrucciones / Instructions</b><br>'+safe(row[7])+'</div>':'')+
-   '<details class="m147-details"><summary>Ver paradas y mapas / Stops &amp; maps</summary>'+stops+'</details></article>';
+   '<div class="m147-field"><b>'+t("HORA","TIME")+'</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>'+t("CAMIÓN","TRUCK")+'</b>'+safe(row[1]||'—')+'</div><div class="m147-field"><b>'+t("ESTADO","STATUS")+'</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
+   '<div class="m147-field m147-driver"><b>'+t("CHOFER","DRIVER")+'</b>'+(row[2]?'<button type="button" class="m147-personBtn" data-person="'+safe(row[2])+'">'+safe(row[2])+'</button>':'—')+'</div><div class="m147-field m147-contract"><b>'+t("CONTRATO / IE","CONTRACT / IE")+'</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
+   '<div class="m147-field m147-crew"><b>'+t("EQUIPO","CREW")+'</b>'+crew+'</div><div class="m147-field m147-location"><b>'+t("LUGAR","LOCATION")+'</b>'+locations.map((loc,i)=>(i+1)+'. '+safe(loc)).join('<br>')+'</div>'+
+   (String(row[7]||'').trim()?'<div class="m147-note"><b>'+t("Instrucciones","Instructions")+'</b><br>'+safe(row[7])+'</div>':'')+
+   '<details class="m147-details"><summary>'+t("Ver paradas y mapas","Stops &amp; maps")+'</summary>'+stops+'</details></article>';
  }
  
  function render(){
   if(!host)return;
+  labels.splice(0,7,...(language==='en'?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']));
+  host.querySelector('[data-language]').value=language;
+  const staticLabels={'[data-day="-1"]':t('Ver semana','View week'),'[data-mode="mine"]':t('Mis rutas','My routes'),'[data-mode="all"]':t('Todas las rutas','All routes'),'[data-refresh]':t('Actualizar ↻','Refresh ↻'),'[data-today]':t('HOY','TODAY'),'.m147-weekHeading span':t('SEMANA · LUN–DOM','WEEK · MON–SUN')};
+  Object.entries(staticLabels).forEach(([sel,text])=>host.querySelector(sel).textContent=text);
+  const search=host.querySelector('.m147-search input');search.placeholder=t('Buscar nombre, ruta, horario, IE#...','Search name, route, schedule, IE#...');search.setAttribute('aria-label',t('Buscar rutas en toda la semana','Search routes across the week'));
   const enabled=items.filter(x=>!x.stale&&isEnabled(x.data.settings||{})),q=norm(query),n=name();
   const selected=enabled.filter(x=>q||day<0||x.idx===day);
   const matched=selected.flatMap(item=>(item.data.rows||[]).map((row,rowIndex)=>({item,row,rowIndex}))).filter(x=>
@@ -5411,14 +5418,14 @@ function card(item,row,rowIndex){
   );
   const list=host.querySelector('.m147-list'),scroll=host.scrollTop;
   const opened=new Set(Array.from(list.querySelectorAll('.m147-card')).filter(el=>el.querySelector('.m147-details[open]')).map(el=>el.dataset.key));
-  host.querySelector('.m147-title').textContent=q?'Búsqueda semanal / Weekly search':
-   person?'Horario semanal / Weekly schedule · '+person:mode==='mine'?'Mis rutas / My routes'+(n?' · '+n:''):
-   day<0?'Rutas semanales / Weekly routes':labels[day]+' · '+routeDate(enabled.find(x=>x.idx===day),day);
-  host.querySelector('.m147-summary').textContent=matched.length+' rutas / routes'+(q?' · Buscando en los 7 días / Searching all days':'');
+  host.querySelector('.m147-title').textContent=q?''+t("Búsqueda semanal","Weekly search")+'':
+   person?''+t("Horario semanal · ","Weekly schedule · ")+''+person:mode==='mine'?''+t("Mis rutas","My routes")+''+(n?' · '+n:''):
+   day<0?''+t("Rutas semanales","Weekly routes")+'':labels[day]+' · '+routeDate(enabled.find(x=>x.idx===day),day);
+  host.querySelector('.m147-summary').textContent=matched.length+''+t(" rutas"," routes")+''+(q?''+t(" · Buscando en los 7 días"," · Searching all 7 days")+'':'');
   list.innerHTML=matched.length?matched.map(x=>card(x.item,x.row,x.rowIndex)).join(''):
-   '<div class="m147-empty">'+(busy?'Cargando rutas / Loading routes…':q?'No se encontraron rutas / No matches':
-   mode==='mine'?'No tienes rutas en esta selección / No personal routes':person?'No hay rutas para este empleado / No routes for this employee':
-   'No hay rutas publicadas para este día (SHOW DAY = YES) / No published routes')+'</div>';
+   '<div class="m147-empty">'+(busy?''+t("Cargando rutas…","Loading routes…")+'':q?''+t("No se encontraron rutas","No matches")+'':
+   mode==='mine'?''+t("No tienes rutas en esta selección","No personal routes in this selection")+'':person?''+t("No hay rutas para este empleado","No routes for this employee")+'':
+   ''+t("No hay rutas publicadas para este día","No published routes for this day")+'')+'</div>';
   list.querySelectorAll('.m147-card').forEach(el=>{if(opened.has(el.dataset.key)){const d=el.querySelector('.m147-details');if(d)d.open=true;}});
   host.scrollTop=scroll;
   host.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode&&!person)));
@@ -5429,9 +5436,9 @@ function card(item,row,rowIndex){
    b.setAttribute('aria-pressed',String(i===day&&!q));b.classList.toggle('m147-today',i===todayIndex());
    b.setAttribute('aria-label',labels[i]+' '+routeDate(it,i)+'; '+count+' rutas');
   });
-  const clear=host.querySelector('[data-person-clear]');clear.hidden=!person;clear.textContent='✕ '+person+' · Ver todas / Show all';
+  const clear=host.querySelector('[data-person-clear]');clear.hidden=!person;clear.textContent='✕ '+person+''+t(" · Ver todas"," · Show all")+'';
   const dates=enabled.map(x=>x.data.syncedAt).filter(Boolean),oldest=dates.length?Math.min(...dates):0,failed=items.some(x=>x.stale);
-  host.querySelector('.m147-status').textContent=(busy?'Actualizando… / Refreshing… ':failed?'Algunos días no se verificaron / Some days could not be verified. ':'')+(oldest?'Datos cargados / Data loaded: '+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):'Actualización aún no verificada / Not verified yet')+'.';
+  host.querySelector('.m147-status').textContent=(busy?''+t("Actualizando… ","Refreshing… ")+'':failed?''+t("Algunos días no se verificaron. ","Some days could not be verified. ")+'':'')+(oldest?''+t("Datos cargados: ","Data loaded: ")+''+new Date(oldest).toLocaleString('en-US',{timeZone:'America/Chicago'}):''+t("Actualización aún no verificada","Not verified yet")+'')+'.';
   host.querySelector('[data-refresh]').disabled=busy;
  }
 async function load(){
@@ -5448,13 +5455,14 @@ async function load(){
   const wrap=document.getElementById('tableWrap');if(!wrap)return;
   host=document.createElement('section');host.id='mobileRoutesV147';host.setAttribute('aria-label','Rutas móviles / Mobile routes');
   host.innerHTML='<div class="m147-pinned">'+
-   '<div class="m147-weekHeading"><span>SEMANA / WEEK · LUN–DOM</span><button type="button" data-day="-1">Ver semana</button></div>'+
+   '<label style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:6px">🌐 <select data-language aria-label="Idioma / Language" style="font-size:16px;padding:6px;border-radius:6px"><option value="es">Español</option><option value="en">English</option></select></label><div class="m147-weekHeading"><span>'+t("SEMANA · LUN–DOM","WEEK · MON–SUN")+'</span><button type="button" data-day="-1">'+t("Ver semana","View week")+'</button></div>'+
    '<div class="m147-days">'+labels.map((l,i)=>'<button type="button" data-day="'+i+'">'+l+'</button>').join('')+'</div>'+
-   '<div class="m147-controls"><button data-mode="mine">Mis rutas</button><button data-mode="all">Todas las rutas</button><button data-refresh>Actualizar ↻</button></div>'+
-   '<div class="m147-search"><input type="search" placeholder="Buscar nombre, ruta, horario, IE#..." aria-label="Buscar rutas en toda la semana" autocomplete="off"><button type="button" data-today>HOY</button><button type="button" data-clear aria-label="Borrar búsqueda">×</button></div></div>'+
+   '<div class="m147-controls"><button data-mode="mine">'+t("Mis rutas","My routes")+'</button><button data-mode="all">'+t("Todas las rutas","All routes")+'</button><button data-refresh>'+t("Actualizar ↻","Refresh ↻")+'</button></div>'+
+   '<div class="m147-search"><input type="search" placeholder="'+t("Buscar nombre, ruta, horario, IE#...","Search name, route, schedule, IE#...")+'" aria-label="'+t("Buscar rutas en toda la semana","Search routes across the week")+'" autocomplete="off"><button type="button" data-today>'+t("HOY","TODAY")+'</button><button type="button" data-clear aria-label="'+t("Borrar búsqueda","Clear search")+'">×</button></div></div>'+
    '<div class="m147-status" role="status" aria-live="polite"></div><div class="m147-title"></div>'+
    '<button type="button" class="m147-personClear" data-person-clear hidden></button><div class="m147-summary"></div><div class="m147-list"></div>';
   wrap.appendChild(host);
+  host.addEventListener('change',e=>{if(!e.target.matches('[data-language]'))return;language=e.target.value;try{localStorage.setItem('curated_mobile_language',language)}catch(e){}render();});
   host.addEventListener('input',e=>{if(e.target.matches('.m147-search input')){query=e.target.value;render();host.scrollTop=0;}});
   host.addEventListener('click',e=>{
    const b=e.target.closest('button');if(!b||!host.contains(b))return;
