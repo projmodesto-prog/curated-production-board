@@ -5362,7 +5362,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  
  let language;try{language=localStorage.getItem('curated_mobile_language')||'es'}catch(e){language='es'}
  const t=(es,en)=>language==='en'?en:es;
- const labels=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+ const labels=['Lun / Mon','Mar / Tue','Mié / Wed','Jue / Thu','Vie / Fri','Sáb / Sat','Dom / Sun'];
  function todayIndex(){
   try{const wd=new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:'America/Chicago'}).format(new Date());return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(wd);}
   catch(e){return (new Date().getDay()+6)%7;}
@@ -5405,7 +5405,7 @@ function card(item,row,rowIndex){
  
  function render(){
   if(!host)return;
-  labels.splice(0,7,...(language==='en'?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']));
+  // Weekday labels remain bilingual in either interface language.
   host.querySelector('[data-language]').value=language;
   const staticLabels={'[data-day="-1"]':t('Ver semana','View week'),'[data-mode="mine"]':t('Mis rutas','My routes'),'[data-mode="all"]':t('Todas las rutas','All routes'),'[data-refresh]':t('Actualizar ↻','Refresh ↻'),'[data-today]':t('HOY','TODAY'),'.m147-weekHeading span':t('SEMANA · LUN–DOM','WEEK · MON–SUN')};
   Object.entries(staticLabels).forEach(([sel,text])=>host.querySelector(sel).textContent=text);
@@ -5432,7 +5432,7 @@ function card(item,row,rowIndex){
   const week=host.querySelector('[data-day="-1"]');week.setAttribute('aria-pressed',String(day===-1&&!q));
   host.querySelectorAll('.m147-days [data-day]').forEach(b=>{
    const i=Number(b.dataset.day),it=enabled.find(x=>x.idx===i),count=it?(it.data.rows||[]).length:0;
-   b.innerHTML='<span>'+labels[i]+'</span><strong>'+routeDate(it,i)+'</strong><small>'+count+'</small>';
+   b.innerHTML='<span>'+labels[i].split(' / ').join('<br>')+'</span><strong>'+routeDate(it,i)+'</strong><small>'+count+'</small>';
    b.setAttribute('aria-pressed',String(i===day&&!q));b.classList.toggle('m147-today',i===todayIndex());
    b.setAttribute('aria-label',labels[i]+' '+routeDate(it,i)+'; '+count+' rutas');
   });
