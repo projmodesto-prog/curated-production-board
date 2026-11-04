@@ -1993,6 +1993,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
     </div>
   </div>
 </div>
+<script src="screen-images.js?v=20261104"></script>
 <script>
 /* V117: multiple CONTRACT numbers stay visible on one line. */
 /* V118: contract display reads helper text column K so multiple IE numbers always render. */
@@ -3467,6 +3468,7 @@ async function updateNextVisibleLabel(){
     const wrapped=(activeDayIndex>=0 && found.idx<=activeDayIndex);
     if(wrapped && shouldShowWeekly()) nextVisibleLabel='EMPLOYEE SCHEDULE';
     else if(wrapped && shouldShowTodaysCrew()) nextVisibleLabel="TODAY'S CREW";
+    else if(wrapped && window.ScreenImages?.hasSlides()) nextVisibleLabel=window.ScreenImages.nextTitle();
     else nextVisibleLabel=routeLabel;
   }
 
@@ -3511,7 +3513,11 @@ async function advanceRotationStep(){
     const wrapped=(activeDayIndex>=0 && found.idx<=activeDayIndex);
     if(wrapped){
       const nextRouteLabel=(found.data.settings.routeDate || found.data.sheetName.replace(' ROUTES','')).trim();
-      await runEmployeeSlideSequence(nextRouteLabel);
+      await runEmployeeSlideSequence(window.ScreenImages?.nextTitle() || nextRouteLabel);
+      await window.ScreenImages?.playOnce({
+        onStart:()=>{activeExtraSlide='screenImagesOverlay'},
+        onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
+      });
     }
 
     await displayDay(found,true);
@@ -3540,6 +3546,13 @@ async function showNoRoutes(){
   activeExtraSlide = '';
   updateTimerText();
   setDebugStatus('NO ACTIVE DAYS', true);
+  if(window.ScreenImages && !(window.matchMedia && window.matchMedia('(max-width:960px)').matches)){
+    await window.ScreenImages.playOnce({
+      onStart:()=>{activeExtraSlide='screenImagesOverlay'},
+      onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
+    });
+    rotationTimeout=setTimeout(advanceRotationStep,5000);
+  }
 }
 
 async function displayDay(found, useFade){
