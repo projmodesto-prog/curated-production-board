@@ -4337,7 +4337,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
           '<div class="mobileWeekRouteDayV134"><strong>'+safe(day)+'</strong><span>'+safe(date)+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 time" data-label="TIME"><span>'+safe(time)+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 truck" data-label="TRUCK"><span>'+safe(row[1]||'')+'</span></div>'+
-          '<div class="mobileWeekRouteFieldV134 status" data-label="STATUS"><span>'+safe(row[6]||'')+'</span></div>'+
+          '<div class="mobileWeekRouteFieldV134 status" data-label="STATUS"><span>'+safe(/^(delivery|del)$/i.test(String(row[6]||'').trim())?'Entrega / Delivery':/^(pick\s*up|pickup|p\/u|pu)$/i.test(String(row[6]||'').trim())?'Recogida / Pickup':row[6]||'')+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 driver" data-label="DRIVER"><span>'+safe(row[2]||'')+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 contract" data-label="CONTRACT"><span>'+safe(contract)+'</span>'+
             (row[8] ? '<small class="mobileRouteSublineV145">'+safe(row[8])+'</small>' : '')+
@@ -5361,7 +5361,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
  const lines=v=>String(v||'').split(/\r?\n/).map(x=>x.replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
  
  let language;try{language=localStorage.getItem('curated_mobile_language')||'es'}catch(e){language='es'}
- const t=(es,en)=>language==='en'?en:es;
+ const t=(es,en)=>es===en?es:es+' / '+en;
  const labels=['Lun / Mon','Mar / Tue','Mié / Wed','Jue / Thu','Vie / Fri','Sáb / Sat','Dom / Sun'];
  function todayIndex(){
   try{const wd=new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:'America/Chicago'}).format(new Date());return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(wd);}
@@ -5455,7 +5455,7 @@ async function load(){
   const wrap=document.getElementById('tableWrap');if(!wrap)return;
   host=document.createElement('section');host.id='mobileRoutesV147';host.setAttribute('aria-label','Rutas móviles / Mobile routes');
   host.innerHTML='<div class="m147-pinned">'+
-   '<label style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:6px">🌐 <select data-language aria-label="Idioma / Language" style="font-size:16px;padding:6px;border-radius:6px"><option value="es">Español</option><option value="en">English</option></select></label><div class="m147-weekHeading"><span>'+t("SEMANA · LUN–DOM","WEEK · MON–SUN")+'</span><button type="button" data-day="-1">'+t("Ver semana","View week")+'</button></div>'+
+   '<label style="display:none">🌐 <select data-language aria-label="Idioma / Language" style="font-size:16px;padding:6px;border-radius:6px"><option value="es">Español</option><option value="en">English</option></select></label><div class="m147-weekHeading"><span>'+t("SEMANA · LUN–DOM","WEEK · MON–SUN")+'</span><button type="button" data-day="-1">'+t("Ver semana","View week")+'</button></div>'+
    '<div class="m147-days">'+labels.map((l,i)=>'<button type="button" data-day="'+i+'">'+l+'</button>').join('')+'</div>'+
    '<div class="m147-controls"><button data-mode="mine">'+t("Mis rutas","My routes")+'</button><button data-mode="all">'+t("Todas las rutas","All routes")+'</button><button data-refresh>'+t("Actualizar ↻","Refresh ↻")+'</button></div>'+
    '<div class="m147-search"><input type="search" placeholder="'+t("Buscar nombre, ruta, horario, IE#...","Search name, route, schedule, IE#...")+'" aria-label="'+t("Buscar rutas en toda la semana","Search routes across the week")+'" autocomplete="off"><button type="button" data-today>'+t("HOY","TODAY")+'</button><button type="button" data-clear aria-label="'+t("Borrar búsqueda","Clear search")+'">×</button></div></div>'+
@@ -5550,4 +5550,29 @@ window.addEventListener('resize',boot);boot();
 .m147-stop .m147-map-choice summary:focus-visible,.m147-map-options a:focus-visible{outline:3px solid #1773b8;outline-offset:3px}
 }
 </style>
+
+<script>
+/* Bilingual mobile navigation, including the employee schedule. */
+(function(){
+ const mq=matchMedia('(max-width:960px)');
+ const labels={
+ mobileRouteScheduleV136:'HORARIO / SCHEDULE',
+ weeklyScheduleAllV136:'TODOS / ALL',
+ weeklyScheduleRoutesV136:'RUTAS / ROUTES',
+ weeklyScheduleTodayV134:'HOY / TODAY',
+ mobileUserButtonV142:'YO / ME'
+ };
+ const days={MON:'Lun / Mon',TUE:'Mar / Tue',WED:'Mié / Wed',THU:'Jue / Thu',FRI:'Vie / Fri',SAT:'Sáb / Sat',SUN:'Dom / Sun'};
+ function apply(){
+  if(!mq.matches)return;
+  Object.entries(labels).forEach(([id,text])=>{const el=document.getElementById(id);if(el&&el.textContent!==text)el.textContent=text;});
+  document.querySelectorAll('.weeklyMobileDayButton').forEach(el=>{const text=days[el.textContent.trim().toUpperCase()];if(text)el.textContent=text;});
+  const input=document.getElementById('weeklyScheduleSearchV134');
+  if(input&&input.placeholder!=='Buscar empleado / Search employee')input.placeholder='Buscar empleado / Search employee';
+ }
+ let pending=false;
+ new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;apply()})}).observe(document.body,{childList:true,subtree:true,characterData:true});
+ mq.addEventListener('change',apply);apply();
+})();
+</script>
 </body></html>
