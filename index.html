@@ -108,16 +108,17 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 .crewPerson{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border-radius:5px;background:#cfd4d7;color:#111;border:1px solid #b8c0c4;font-weight:750;box-shadow:none}
 .contractFull{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:.90em;letter-spacing:-.15px;line-height:1}
 .truckWithGroup{display:inline-flex;align-items:center;justify-content:center;gap:5px;max-width:100%}
-.relatedTentIcon{--rg:#1d8fe1;display:inline-flex;align-items:center;justify-content:center;width:1.08em;height:1.02em;margin:0;vertical-align:-.12em;color:var(--rg);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rg) 48%,transparent));animation:relatedTentPulse 2.8s ease-in-out infinite;transform-origin:center}
-.relatedTentIcon svg{display:block;width:100%;height:100%;overflow:visible}
-.relatedTentIcon.rg0{--rg:#188fe8}
-.relatedTentIcon.rg1{--rg:#d84aa5}
-.relatedTentIcon.rg2{--rg:#18a95b}
-.relatedTentIcon.rg3{--rg:#db8b18}
-.relatedTentIcon.rg4{--rg:#7b61d1}
-.relatedTentIcon.rg5{--rg:#0da4a7}
-@keyframes relatedTentPulse{0%,100%{opacity:.72;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
-@media (prefers-reduced-motion:reduce){.relatedTentIcon{animation:none!important;opacity:1!important;transform:none!important}}
+.truckGroupLabel{min-width:0;overflow-wrap:anywhere}
+.relatedTruckIcon{--rg:#1d8fe1;display:inline-flex;flex:0 0 1.2em;align-items:center;justify-content:center;width:1.2em;height:1em;margin:0;vertical-align:-.12em;color:var(--rg);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rg) 48%,transparent));animation:relatedTruckPulse 2.8s ease-in-out infinite;transform-origin:center}
+.relatedTruckIcon svg{display:block;width:100%;height:100%;overflow:visible}
+.relatedTruckIcon.rg0{--rg:#188fe8}
+.relatedTruckIcon.rg1{--rg:#d84aa5}
+.relatedTruckIcon.rg2{--rg:#18a95b}
+.relatedTruckIcon.rg3{--rg:#db8b18}
+.relatedTruckIcon.rg4{--rg:#7b61d1}
+.relatedTruckIcon.rg5{--rg:#0da4a7}
+@keyframes relatedTruckPulse{0%,100%{opacity:.72;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.relatedTruckIcon{animation:none!important;opacity:1!important;transform:none!important}}
 .locationFull{display:block;white-space:normal;overflow-wrap:anywhere}
 .routeSubline{display:block;margin-top:5px;font-size:.72em;line-height:1.08;font-weight:850;white-space:normal;overflow:hidden;text-overflow:ellipsis}
 .routeTentLine{color:#174f8a}
@@ -3080,15 +3081,17 @@ function buildRelatedRouteGroups(rows){
   return rowGroups;
 }
 
-function relatedTentMarkup(group){
+function relatedTruckMarkup(group){
   if(!group) return '';
   const colorClass='rg'+(group.groupIndex%6);
   const why=group.kind==='address' ? 'same address' : 'same contract';
   const title=group.count+' related routes • '+why;
-  return '<span class="relatedTentIcon '+colorClass+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+
-    '<svg viewBox="0 0 24 20" role="img" aria-hidden="true">'+
-      '<path d="M2.4 18 12 3l9.6 15H2.4Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/>'+
-      '<path d="M12 3v15M7.7 18 12 10.7 16.3 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'+
+  return '<span class="relatedTruckIcon '+colorClass+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+
+    '<svg viewBox="0 0 28 22" role="img" aria-hidden="true">'+
+      '<path d="M2 3h14v13H2zM16 7h5l5 5v4H16" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'+
+      '<path d="M18 9h2.2l3 3H18z" fill="currentColor" opacity=".6"/>'+
+      '<circle cx="7" cy="17" r="3" fill="currentColor"/><circle cx="22" cy="17" r="3" fill="currentColor"/>'+
+      '<circle cx="7" cy="17" r="1.1" fill="white"/><circle cx="22" cy="17" r="1.1" fill="white"/>'+
     '</svg>'+
   '</span>';
 }
@@ -3180,7 +3183,7 @@ function render(rows, settings = {}){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${esc(formatRouteTime(r[0]))}</td>
-      <td><span class="truckWithGroup">${relatedTentMarkup(relatedGroups[rowIndex])}<span>${esc(r[1])}</span></span></td>
+      <td><span class="truckWithGroup">${relatedTruckMarkup(relatedGroups[rowIndex])}<span class="truckGroupLabel">${esc(r[1])}</span></span></td>
       <td><span class="driverBadge">${esc(r[2])}</span></td>
       <td>${crewPills(r[3])}</td>
       <td>
@@ -5385,6 +5388,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
   render();host.scrollTop=0;
  }
 function card(item,row,rowIndex){
+  const relatedGroup=buildRelatedRouteGroups(item.data.rows||[])[rowIndex];
   const locations=lines(row[5]),addresses=lines(row[9]);
   const orders=String(row[4]||'').match(/\d{6}/g)||[];
   const stopCount=Math.max(locations.length,addresses.length,1);
@@ -5396,7 +5400,7 @@ function card(item,row,rowIndex){
   const statusClass=/pick|p\/u/i.test(row[6]||'')?'m147-pickup':/del/i.test(row[6]||'')?'m147-delivery':'';
   const crew=String(row[3]||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).map(x=>'<button type="button" class="m147-personBtn" data-person="'+safe(x)+'">'+safe(x)+'</button>').join(' ');
   return '<article class="m147-card" data-key="'+item.idx+'-'+rowIndex+'"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div>'+
-   '<div class="m147-field"><b>'+t("HORA","TIME")+'</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>'+t("CAMIÓN","TRUCK")+'</b>'+safe(row[1]||'—')+'</div><div class="m147-field"><b>'+t("ESTADO","STATUS")+'</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
+   '<div class="m147-field"><b>'+t("HORA","TIME")+'</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>'+t("CAMIÓN","TRUCK")+'</b><span class="truckWithGroup">'+relatedTruckMarkup(relatedGroup)+'<span class="truckGroupLabel">'+safe(row[1]||'—')+'</span></span></div><div class="m147-field"><b>'+t("ESTADO","STATUS")+'</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
    '<div class="m147-field m147-driver"><b>'+t("CHOFER","DRIVER")+'</b>'+(row[2]?'<button type="button" class="m147-personBtn" data-person="'+safe(row[2])+'">'+safe(row[2])+'</button>':'—')+'</div><div class="m147-field m147-contract"><b>'+t("CONTRATO / IE","CONTRACT / IE")+'</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
    '<div class="m147-field m147-crew"><b>'+t("EQUIPO","CREW")+'</b>'+crew+'</div><div class="m147-field m147-location"><b>'+t("LUGAR","LOCATION")+'</b>'+locations.map((loc,i)=>(i+1)+'. '+safe(loc)).join('<br>')+'</div>'+
    (String(row[7]||'').trim()?'<div class="m147-note"><b>'+t("Instrucciones","Instructions")+'</b><br>'+safe(row[7])+'</div>':'')+
