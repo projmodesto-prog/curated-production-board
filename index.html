@@ -111,9 +111,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 .truckGroupLabel{min-width:0;overflow-wrap:anywhere}
 .relatedTruckIcon{--rg:#1d8fe1;display:inline-flex;flex:0 0 1.2em;align-items:center;justify-content:center;width:1.2em;height:1em;margin:0;vertical-align:-.12em;color:var(--rg);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rg) 48%,transparent));animation:relatedTruckPulse 2.8s ease-in-out infinite;transform-origin:center}
 .relatedTruckIcon svg{display:block;width:100%;height:100%;overflow:visible}
-.relatedTruckIcon.rg0{--rg:#188fe8}
-.relatedTruckIcon.rg1{--rg:#d84aa5}
-.relatedTruckIcon.rg2{--rg:#18a95b}
+.relatedTruckIcon.rg0{--rg:#18a95b}
+.relatedTruckIcon.rg1{--rg:#dc2626}
+.relatedTruckIcon.rg2{--rg:#188fe8}
 .relatedTruckIcon.rg3{--rg:#db8b18}
 .relatedTruckIcon.rg4{--rg:#7b61d1}
 .relatedTruckIcon.rg5{--rg:#0da4a7}
@@ -3056,10 +3056,10 @@ function buildRelatedRouteGroups(rows){
 
   const candidates=[];
   for(const [key,indexes] of byContract){
-    if(indexes.length>=3) candidates.push({kind:'contract',key,indexes:[...indexes]});
+    if(indexes.length>=2) candidates.push({kind:'contract',key,indexes:[...indexes]});
   }
   for(const [key,indexes] of byAddress){
-    if(indexes.length>=3) candidates.push({kind:'address',key,indexes:[...indexes]});
+    if(indexes.length>=2) candidates.push({kind:'address',key,indexes:[...indexes]});
   }
 
   const seenSets=new Set();
@@ -3088,7 +3088,7 @@ function relatedTruckMarkup(group){
   const title=group.count+' related routes • '+why;
   return '<span class="relatedTruckIcon '+colorClass+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+
     '<svg viewBox="0 0 28 22" role="img" aria-hidden="true">'+
-      '<path d="M2 3h14v13H2zM16 7h5l5 5v4H16" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'+
+      '<path d="M2 3h14v13H2zM16 7h5l5 5v4H16" fill="currentColor" fill-opacity="1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'+
       '<path d="M18 9h2.2l3 3H18z" fill="currentColor" opacity=".6"/>'+
       '<circle cx="7" cy="17" r="3" fill="currentColor"/><circle cx="22" cy="17" r="3" fill="currentColor"/>'+
       '<circle cx="7" cy="17" r="1.1" fill="white"/><circle cx="22" cy="17" r="1.1" fill="white"/>'+
