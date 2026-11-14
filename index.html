@@ -3028,6 +3028,10 @@ function routeStatusBadges(value){
   return '<div class="statusBadgeWrap">' + badges.join('') + '</div>';
 }
 
+function cleanTruckLabel(value){
+  return String(value || '').replace(/[🟠🔵🟢🔴🟡🟣🟤⚫⚪●•🔶🔷🟥🟧🟨🟩🟦🟪]?\s*[🎪⛺]\uFE0F?\s*[A-Z]\b/gu,'').replace(/[🎪⛺🟠🔵🟢🔴🟡🟣🟤⚫⚪●🔶🔷🟥🟧🟨🟩🟦🟪]\uFE0F?/gu,'').replace(/ {2,}/g,' ').trim();
+}
+
 function relatedRouteKey(value){
   return String(value || '')
     .toUpperCase()
@@ -3037,10 +3041,16 @@ function relatedRouteKey(value){
 
 function buildRelatedRouteGroups(rows){
   const list = Array.isArray(rows) ? rows : [];
+  const byManual = new Map();
   const byContract = new Map();
   const byAddress = new Map();
 
   list.forEach((r,idx)=>{
+    const manual = String(r && r[1] || '').match(/[🎪⛺]\uFE0F?\s*([A-Z])\b/u);
+    if(manual){
+      if(!byManual.has(manual[1])) byManual.set(manual[1],[]);
+      byManual.get(manual[1]).push(idx);
+    }
     const contractKey = relatedRouteKey(r && r[4]);
     const addressKey = relatedRouteKey(r && r[9]);
 
@@ -3055,6 +3065,9 @@ function buildRelatedRouteGroups(rows){
   });
 
   const candidates=[];
+  for(const [key,indexes] of byManual){
+    if(indexes.length>=2) candidates.push({kind:'manual',key,indexes:[...indexes]});
+  }
   for(const [key,indexes] of byContract){
     if(indexes.length>=2) candidates.push({kind:'contract',key,indexes:[...indexes]});
   }
@@ -3064,7 +3077,7 @@ function buildRelatedRouteGroups(rows){
 
   const seenSets=new Set();
   const unique=candidates
-    .sort((a,b)=>(Math.min(...a.indexes)-Math.min(...b.indexes)) || (a.kind==='contract'?-1:1))
+    .sort((a,b)=>(Math.min(...a.indexes)-Math.min(...b.indexes)) || (a.kind==='manual'?-1:b.kind==='manual'?1:a.kind==='contract'?-1:1))
     .filter(g=>{
       const sig=[...g.indexes].sort((a,b)=>a-b).join(',');
       if(seenSets.has(sig)) return false;
@@ -3084,7 +3097,7 @@ function buildRelatedRouteGroups(rows){
 function relatedTruckMarkup(group){
   if(!group) return '';
   const colorClass='rg'+(group.groupIndex%6);
-  const why=group.kind==='address' ? 'same address' : 'same contract';
+  const why=group.kind==='manual' ? 'same group' : group.kind==='address' ? 'same address' : 'same contract';
   const title=group.count+' related routes • '+why;
   return '<span class="relatedTruckIcon '+colorClass+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+
     '<svg viewBox="0 0 28 22" role="img" aria-hidden="true">'+
@@ -3183,7 +3196,7 @@ function render(rows, settings = {}){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${esc(formatRouteTime(r[0]))}</td>
-      <td><span class="truckWithGroup">${relatedTruckMarkup(relatedGroups[rowIndex])}<span class="truckGroupLabel">${esc(r[1])}</span></span></td>
+      <td><span class="truckWithGroup">${relatedTruckMarkup(relatedGroups[rowIndex])}<span class="truckGroupLabel">${esc(cleanTruckLabel(r[1]))}</span></span></td>
       <td><span class="driverBadge">${esc(r[2])}</span></td>
       <td>${crewPills(r[3])}</td>
       <td>
@@ -4339,7 +4352,7 @@ setInterval(refreshInstallationPhotos,PHOTO_REFRESH_MS);
         '<article class="mobileWeekRouteCardV134" tabindex="0" data-day="'+safe(day)+'">'+
           '<div class="mobileWeekRouteDayV134"><strong>'+safe(day)+'</strong><span>'+safe(date)+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 time" data-label="TIME"><span>'+safe(time)+'</span></div>'+
-          '<div class="mobileWeekRouteFieldV134 truck" data-label="TRUCK"><span>'+safe(row[1]||'')+'</span></div>'+
+          '<div class="mobileWeekRouteFieldV134 truck" data-label="TRUCK"><span>'+safe(cleanTruckLabel(row[1]))+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 status" data-label="STATUS"><span>'+safe(/^(delivery|del)$/i.test(String(row[6]||'').trim())?'Entrega / Delivery':/^(pick\s*up|pickup|p\/u|pu)$/i.test(String(row[6]||'').trim())?'Recogida / Pickup':row[6]||'')+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 driver" data-label="DRIVER"><span>'+safe(row[2]||'')+'</span></div>'+
           '<div class="mobileWeekRouteFieldV134 contract" data-label="CONTRACT"><span>'+safe(contract)+'</span>'+
@@ -5400,7 +5413,7 @@ function card(item,row,rowIndex){
   const statusClass=/pick|p\/u/i.test(row[6]||'')?'m147-pickup':/del/i.test(row[6]||'')?'m147-delivery':'';
   const crew=String(row[3]||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).map(x=>'<button type="button" class="m147-personBtn" data-person="'+safe(x)+'">'+safe(x)+'</button>').join(' ');
   return '<article class="m147-card" data-key="'+item.idx+'-'+rowIndex+'"><div class="m147-date">'+safe(item.data.settings?.routeDate||item.name.trim())+'</div>'+
-   '<div class="m147-field"><b>'+t("HORA","TIME")+'</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>'+t("CAMIÓN","TRUCK")+'</b><span class="truckWithGroup">'+relatedTruckMarkup(relatedGroup)+'<span class="truckGroupLabel">'+safe(row[1]||'—')+'</span></span></div><div class="m147-field"><b>'+t("ESTADO","STATUS")+'</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
+   '<div class="m147-field"><b>'+t("HORA","TIME")+'</b>'+safe(formatRouteTime(row[0]))+'</div><div class="m147-field"><b>'+t("CAMIÓN","TRUCK")+'</b><span class="truckWithGroup">'+relatedTruckMarkup(relatedGroup)+'<span class="truckGroupLabel">'+safe(cleanTruckLabel(row[1])||'—')+'</span></span></div><div class="m147-field"><b>'+t("ESTADO","STATUS")+'</b><span class="m147-statusBadge '+statusClass+'">'+safe(row[6]||'')+'</span></div>'+
    '<div class="m147-field m147-driver"><b>'+t("CHOFER","DRIVER")+'</b>'+(row[2]?'<button type="button" class="m147-personBtn" data-person="'+safe(row[2])+'">'+safe(row[2])+'</button>':'—')+'</div><div class="m147-field m147-contract"><b>'+t("CONTRATO / IE","CONTRACT / IE")+'</b>'+safe(formatContracts(row[4]))+(row[8]?'<small class="m147-tents">'+safe(row[8])+'</small>':'')+'</div>'+
    '<div class="m147-field m147-crew"><b>'+t("EQUIPO","CREW")+'</b>'+crew+'</div><div class="m147-field m147-location"><b>'+t("LUGAR","LOCATION")+'</b>'+locations.map((loc,i)=>(i+1)+'. '+safe(loc)).join('<br>')+'</div>'+
    (String(row[7]||'').trim()?'<div class="m147-note"><b>'+t("Instrucciones","Instructions")+'</b><br>'+safe(row[7])+'</div>':'')+
