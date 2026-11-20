@@ -2238,6 +2238,19 @@ function cellValue(cell){
 const EMPLOYEE_SCHEDULE_GID='1987654340';
 const TODAYS_CREW_GID='1987654341';
 const EMPLOYEE_SETTINGS_GID='1987654342';
+const MASTER_SETTINGS_GID='1987654460';
+let mvixMasterV144={routes:true,weekly:true,crew:true,images:true,responsibilities:false};
+function isMvixDesktopV144(){return !(window.matchMedia && window.matchMedia('(max-width:960px)').matches);}
+function masterAllowsV144(key){return !isMvixDesktopV144() || mvixMasterV144[key]!==false;}
+async function refreshMasterV144(){
+  try{
+    const raw=await fetchExtraSheetOnce(MASTER_SETTINGS_GID,'A1:C8',3);
+    const map=Object.fromEntries(raw.map(r=>[String(r[0]||'').trim().toUpperCase(),r[1]]));
+    if(!Object.prototype.hasOwnProperty.call(map,'SHOW ROUTES'))return;
+    mvixMasterV144={routes:settingYes(map['SHOW ROUTES'],true),weekly:settingYes(map['SHOW WEEKLY SCHEDULE'],true),crew:settingYes(map['SHOW TODAYS CREW'],true),images:settingYes(map['SHOW SCREEN IMAGES'],true),responsibilities:settingYes(map['SHOW DAILY RESPONSIBILITIES'],false)};
+    try{localStorage.setItem('mvix_master_v144',JSON.stringify(mvixMasterV144));}catch(e){}
+  }catch(e){try{const cached=JSON.parse(localStorage.getItem('mvix_master_v144')||'null');if(cached)mvixMasterV144={...mvixMasterV144,...cached};}catch(ignore){}}
+}
 const SCHEDULE_HIGHLIGHTS_GID='1987654343';
 const EMPLOYEE_SLIDE_REFRESH_MS=60000;
 const EMPLOYEE_SETTINGS_REFRESH_MS=15000;
@@ -2285,11 +2298,11 @@ function parseEmployeeDisplaySettings(raw){
 }
 
 function shouldShowWeekly(){
-  return !!(employeeDisplaySettings.showEmployeeSlides && employeeDisplaySettings.showWeeklySchedule && weeklyScheduleData?.rows?.length);
+  return !!(masterAllowsV144('weekly') && employeeDisplaySettings.showEmployeeSlides && employeeDisplaySettings.showWeeklySchedule && weeklyScheduleData?.rows?.length);
 }
 
 function shouldShowTodaysCrew(){
-  return !!(employeeDisplaySettings.showEmployeeSlides && employeeDisplaySettings.showTodaysCrew && todayCrewData?.rows?.length);
+  return !!(masterAllowsV144('crew') && employeeDisplaySettings.showEmployeeSlides && employeeDisplaySettings.showTodaysCrew && todayCrewData?.rows?.length);
 }
 
 function copyBrandLogos(){
@@ -3416,6 +3429,7 @@ async function fetchSheet(sheetName, attempts=3){
 }
 
 function isEnabled(settings){
+  if(!masterAllowsV144('routes')) return false;
   const raw = String(settings.showDay || '').trim().toUpperCase();
   return ['YES','Y','TRUE','1','ON','SI','SÍ'].includes(raw);
 }
@@ -3452,6 +3466,7 @@ function updateTimerText(){
 }
 
 async function findNextEnabledData(startIndex){
+  if(!masterAllowsV144('routes')) return null;
   for (let offset=0; offset<DAY_SHEETS.length; offset++){
     const idx = (startIndex + offset) % DAY_SHEETS.length;
     const name = DAY_SHEETS[idx];
@@ -3486,7 +3501,7 @@ async function updateNextVisibleLabel(){
     const wrapped=(activeDayIndex>=0 && found.idx<=activeDayIndex);
     if((wrapped || Date.now()-lastEmployeeSequenceV143>=60000) && shouldShowWeekly()) nextVisibleLabel='EMPLOYEE SCHEDULE';
     else if(wrapped && shouldShowTodaysCrew()) nextVisibleLabel="TODAY'S CREW";
-    else if(wrapped && window.ScreenImages?.hasSlides()) nextVisibleLabel=window.ScreenImages.nextTitle();
+    else if(wrapped && masterAllowsV144('images') && window.ScreenImages?.hasSlides()) nextVisibleLabel=window.ScreenImages.nextTitle();
     else nextVisibleLabel=routeLabel;
   }
 
@@ -3522,6 +3537,7 @@ async function advanceRotationStep(){
   clearTimeout(rotationTimeout);
 
   try{
+    await refreshMasterV144();
     const found=await findNextEnabledData((activeDayIndex + 1) % DAY_SHEETS.length);
     if(!found){
       await showNoRoutes();
@@ -3531,10 +3547,10 @@ async function advanceRotationStep(){
     const wrapped=(activeDayIndex>=0 && found.idx<=activeDayIndex);
     const nextRouteLabel=(found.data.settings.routeDate || found.data.sheetName.replace(' ROUTES','')).trim();
     if(wrapped || Date.now()-lastEmployeeSequenceV143>=60000){
-      await runEmployeeSlideSequence(wrapped ? (window.ScreenImages?.nextTitle() || nextRouteLabel) : nextRouteLabel);
+      await runEmployeeSlideSequence(wrapped && masterAllowsV144('images') ? (window.ScreenImages?.nextTitle() || nextRouteLabel) : nextRouteLabel);
     }
     if(wrapped){
-      await window.ScreenImages?.playOnce({
+      if(masterAllowsV144('images')) await window.ScreenImages?.playOnce({
         onStart:()=>{activeExtraSlide='screenImagesOverlay'},
         onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
       });
@@ -3558,7 +3574,7 @@ async function showNoRoutes(){
       '<tr><td colspan="7" style="text-align:center;font-size:28px;font-weight:800;">NO ROUTES SELECTED</td></tr>';
   }
   const dateEl = document.getElementById('dateText');
-  if (dateEl) dateEl.textContent = 'SET SHOW DAY = YES';
+  if (dateEl) dateEl.textContent = masterAllowsV144('routes') ? 'SET SHOW DAY = YES' : 'PRODUCTION BOARD';
   nextVisibleLabel = '--';
   countdownRemaining = 0;
   slideDeadlineMs = 0;
@@ -3567,8 +3583,8 @@ async function showNoRoutes(){
   updateTimerText();
   setDebugStatus('NO ACTIVE DAYS', true);
   if(!(window.matchMedia && window.matchMedia('(max-width:960px)').matches)){
-    await runEmployeeSlideSequence(window.ScreenImages?.nextTitle() || 'ROUTES');
-    await window.ScreenImages?.playOnce({
+    await runEmployeeSlideSequence((masterAllowsV144('images') && window.ScreenImages?.nextTitle()) || 'PRODUCTION BOARD');
+    if(masterAllowsV144('images')) await window.ScreenImages?.playOnce({
       onStart:()=>{activeExtraSlide='screenImagesOverlay'},
       onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
     });
@@ -3666,6 +3682,7 @@ async function refreshActiveDay(){
 
 async function startDayRotation(){
   startCountdown();
+  await refreshMasterV144();
   await advanceToNextDay(0, false);
 
   clearInterval(refreshInterval);
@@ -3765,6 +3782,7 @@ startDayRotation();
 const embeddedDelayV141=window.__embeddedMobileV141;
 setTimeout(refreshEmployeeDisplaySettings,embeddedDelayV141?5200:200);
 setInterval(refreshEmployeeDisplaySettings,EMPLOYEE_SETTINGS_REFRESH_MS);
+setInterval(refreshMasterV144,EMPLOYEE_SETTINGS_REFRESH_MS);
 setTimeout(refreshEmployeeSlidesData,embeddedDelayV141?7200:450);
 setInterval(refreshEmployeeSlidesData,EMPLOYEE_SLIDE_REFRESH_MS);
 setTimeout(refreshWeatherFromSheet,embeddedDelayV141?2400:180);
