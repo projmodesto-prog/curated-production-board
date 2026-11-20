@@ -1875,7 +1875,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 </style>
 <style>@media(max-width:960px){html.qrAccessLockedV144 #viewport{visibility:hidden!important}html.qrAccessLockedV144 .mobileUserOverlayV142{background:#030c10!important}}</style>
 <style id="schedule-moon-clean">.scheduleMoon{font-size:.72em;line-height:1;display:inline-block;vertical-align:baseline;margin-right:.12em}</style>
-</head>
+<style>
+.respBodyV145{display:flex;flex-direction:column;background:#eef2f3}#respCountsV145{display:flex;background:#214653;color:#fff;flex:0 0 auto}#respCountsV145>div{flex:1;text-align:center;padding:12px;font-size:17px;font-weight:800;border-right:1px solid #58717c}#respCountsV145 strong{display:block;font-size:32px}.respTableWrapV145{flex:1;overflow:auto}#respTableV145{width:100%;border-collapse:collapse;table-layout:fixed;color:#101416}#respTableV145 th{background:#0a2029;color:white;padding:14px 8px;font-size:19px;text-align:left}#respTableV145 td{padding:13px 9px;font-size:20px;line-height:1.2;overflow-wrap:anywhere;border-bottom:1px solid #8faab6;border-right:1px solid #8faab6;vertical-align:middle}#respTableV145 td:nth-child(2){font-weight:800}#respTableV145 tbody tr:nth-child(odd){background:#f9fcff}#respTableV145 tbody tr:nth-child(even){background:#a9cde0}.respStatusV145{display:block;text-align:center;border-radius:4px;font-size:16px;font-weight:900;padding:8px 4px;background:#ffd76a}.respStatusV145.progress{background:#64b5f6}.respStatusV145.done{background:#81c784}
+</style></head>
 <body>
 <!-- V113 FINAL: Sheet-driven weather/messages/photos. Photos display only when SHOW=YES. No demo/preview images. -->
 <div id="viewport">
@@ -1963,7 +1965,10 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
       <div class="extraFooter"><span>LIVE FROM GOOGLE SHEET • EMPLOYEE SCHEDULE</span><span class="extraCountdown" id="weeklyExtraCountdown">NEXT: TODAY'S CREW • 00:12</span></div>
     </section>
 
-    <section class="extraSlide" id="todayCrewSlide" aria-hidden="true">
+    <section class="extraSlide" id="responsibilitiesSlide" aria-hidden="true">
+<div class="extraSlideHeader"><div class="extraBrand"><img id="responsibilitiesLogo" alt="Curated Events"></div><div class="extraTitleBlock"><div class="extraTitle">DAILY RESPONSIBILITIES</div><div class="extraSubtitle" id="responsibilitiesSubtitle">TENT &amp; PRODUCTION DIVISION</div></div><div class="extraClock"><svg viewBox="0 0 340 150" style="width:245px;height:105px" aria-label="Sailcloth tent"><path d="M12 98 Q59 87 91 25 Q118 72 170 78 Q215 72 249 25 Q280 88 328 98 Q295 106 249 98 Q208 108 170 98 Q129 108 91 98 Q48 106 12 98Z" fill="#f5f5f0"/><path d="M24 99V137 M91 99V137 M170 99V137 M249 99V137 M316 99V137 M91 25V4 L113 10 L91 16 M249 25V4 L271 10 L249 16" stroke="#f5f5f0" stroke-width="3" fill="none"/><path d="M91 28 Q82 73 58 101 M91 28 Q115 85 148 101 M249 28 Q225 85 192 101 M249 28 Q258 73 282 101 M12 98L1 137 M328 98L339 137" stroke="#a1b3bb" stroke-width="2" fill="none"/></svg></div></div>
+<div class="extraSlideBody respBodyV145"><div id="respCountsV145"></div><div class="respTableWrapV145"><table id="respTableV145"><colgroup><col style="width:9%"><col style="width:27%"><col style="width:20%"><col style="width:15%"><col style="width:12%"><col style="width:17%"></colgroup><thead><tr><th>TIME</th><th>RESPONSIBILITY</th><th>ASSIGNED CREW</th><th>LOCATION</th><th>STATUS</th><th>NOTES</th></tr></thead><tbody id="respRowsV145"></tbody></table></div></div><div class="extraFooter"><span>SAFETY • QUALITY • TEAMWORK</span><span class="extraCountdown"></span></div></section>
+<section class="extraSlide" id="todayCrewSlide" aria-hidden="true">
       <div class="extraSlideHeader">
         <div class="extraBrand"><img id="todayCrewSlideLogo" alt="Curated Events Nashville"></div>
         <div class="extraTitleBlock">
@@ -2553,7 +2558,7 @@ function updateExtraClocks(){
 }
 
 function hideExtraSlides(){
-  ['weeklyScheduleSlide','todayCrewSlide'].forEach(id=>{
+  ['weeklyScheduleSlide','todayCrewSlide','responsibilitiesSlide'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.classList.remove('isActive');el.setAttribute('aria-hidden','true')}
   });
@@ -2599,6 +2604,9 @@ async function runEmployeeSlideSequence(nextRouteLabel){
   // The main Routes screen remains visible while this refresh happens.
   await refreshEmployeeSlidesData();
 
+  await refreshResponsibilitiesV145();
+  const hasResp=shouldShowResponsibilitiesV145();
+  if(hasResp) await showResponsibilitiesV145(shouldShowWeekly()?'EMPLOYEE SCHEDULE':shouldShowTodaysCrew()?"TODAY'S CREW":nextRouteLabel);
   if(!employeeDisplaySettings.showEmployeeSlides) return;
 
   const hasWeekly=shouldShowWeekly();
@@ -2619,6 +2627,48 @@ async function runEmployeeSlideSequence(nextRouteLabel){
   }
 }
 
+
+const RESPONSIBILITIES_GID_V145='1987654470';
+let responsibilitiesV145=null;
+async function refreshResponsibilitiesV145(){
+  if(!mvixMasterV144.responsibilities){responsibilitiesV145=null;return;}
+  try{
+    const raw=await fetchExtraSheetOnce(RESPONSIBILITIES_GID_V145,'A1:F100',6);
+    const cfg=raw[1]||[], head=raw[2]||[];
+    const rows=raw.slice(4).filter(r=>String(r[1]||'').trim());
+    responsibilitiesV145={date:cfg[1]||'',location:cfg[3]||'',enabled:settingYes(cfg[5],false),seconds:settingSeconds(head[1],15),rows};
+    renderResponsibilitiesV145(responsibilitiesV145);
+  }catch(e){responsibilitiesV145=null;}
+}
+function renderResponsibilitiesV145(data,rows=data.rows){
+  const logo=document.getElementById('responsibilitiesLogo');
+  const brand=document.querySelector('.logoPanel img');
+  if(logo&&brand&&brand.src)logo.src=brand.src;
+  document.getElementById('responsibilitiesSubtitle').textContent=[data.date,data.location,'TENT & PRODUCTION DIVISION'].filter(Boolean).join(' • ');
+  const counts=document.getElementById('respCountsV145');counts.replaceChildren();
+  for(const [label,value] of [['TOTAL TASKS',data.rows.length],['IN PROGRESS',data.rows.filter(r=>String(r[4]).toUpperCase()==='IN PROGRESS').length],['COMPLETED',data.rows.filter(r=>String(r[4]).toUpperCase()==='COMPLETED').length]]){
+    const box=document.createElement('div'),n=document.createElement('strong');n.textContent=String(value);box.append(n,document.createTextNode(label));counts.append(box);
+  }
+  const body=document.getElementById('respRowsV145');body.replaceChildren();
+  for(const row of rows){
+    const tr=document.createElement('tr');
+    for(let i=0;i<6;i++){
+      const td=document.createElement('td');
+      if(i===4){const badge=document.createElement('span');const v=String(row[i]||'PENDING').toUpperCase();badge.className='respStatusV145'+(v==='COMPLETED'?' done':v==='IN PROGRESS'?' progress':'');badge.textContent=v;td.append(badge);}
+      else td.textContent=row[i]||'';
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+}
+function shouldShowResponsibilitiesV145(){return !!(mvixMasterV144.responsibilities && responsibilitiesV145?.enabled && responsibilitiesV145?.rows?.length);}
+async function showResponsibilitiesV145(next){
+ const data=responsibilitiesV145;if(!shouldShowResponsibilitiesV145())return;
+ for(let offset=0;offset<data.rows.length;offset+=9){
+  renderResponsibilitiesV145(data,data.rows.slice(offset,offset+9));
+  await showExtraSlide('responsibilitiesSlide',data.seconds,offset+9<data.rows.length?'DAILY RESPONSIBILITIES':next);
+ }
+}
 
 const TRAFFIC_GID = '562580367';
 let trafficRows = [];
