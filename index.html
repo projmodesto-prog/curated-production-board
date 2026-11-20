@@ -2247,6 +2247,7 @@ let weeklyScheduleData=null;
 let todayCrewData=null;
 let scheduleCellHighlights={};
 let activeExtraSlide='';
+let lastEmployeeSequenceV143=0;
 let employeeDisplaySettings={
   showEmployeeSlides:true,
   showWeeklySchedule:true,
@@ -2513,10 +2514,10 @@ async function refreshEmployeeSlidesData(){
       if(cached && typeof cached==='object') scheduleCellHighlights=cached;
     });
 
-  const weeklyPromise=fetchExtraSheetOnce(EMPLOYEE_SCHEDULE_GID,'A1:I40',9)
+  const weeklyPromise=fetchExtraSheetOnce(EMPLOYEE_SCHEDULE_GID,'A1:I36',9)
     .then(raw=>parseWeeklyScheduleRows(raw))
-    .then(data=>{if(data&&data.rows?.length){weeklyScheduleData=data;employeeSlideCacheSet('mvix_weekly_schedule_v120',data)}})
-    .catch(()=>{if(!weeklyScheduleData) weeklyScheduleData=employeeSlideCacheGet('mvix_weekly_schedule_v120')});
+    .then(data=>{if(data&&data.rows?.length){weeklyScheduleData=data;employeeSlideCacheSet('mvix_weekly_schedule_v143',data)}})
+    .catch(()=>{if(!weeklyScheduleData) weeklyScheduleData=employeeSlideCacheGet('mvix_weekly_schedule_v143')});
 
   const todayPromise=fetchExtraSheetOnce(TODAYS_CREW_GID,'A1:C60',3)
     .then(raw=>parseTodayCrewRows(raw))
@@ -2577,6 +2578,7 @@ async function showExtraSlide(id,seconds,nextLabel){
 }
 
 async function runEmployeeSlideSequence(nextRouteLabel){
+  lastEmployeeSequenceV143=Date.now();
   // Read switches/timers immediately before the employee-slide sequence.
   await refreshEmployeeDisplaySettings();
 
@@ -3482,7 +3484,7 @@ async function updateNextVisibleLabel(){
   }else{
     const routeLabel=(found.data.settings.routeDate || found.data.sheetName.replace(' ROUTES','')).trim();
     const wrapped=(activeDayIndex>=0 && found.idx<=activeDayIndex);
-    if(wrapped && shouldShowWeekly()) nextVisibleLabel='EMPLOYEE SCHEDULE';
+    if((wrapped || Date.now()-lastEmployeeSequenceV143>=60000) && shouldShowWeekly()) nextVisibleLabel='EMPLOYEE SCHEDULE';
     else if(wrapped && shouldShowTodaysCrew()) nextVisibleLabel="TODAY'S CREW";
     else if(wrapped && window.ScreenImages?.hasSlides()) nextVisibleLabel=window.ScreenImages.nextTitle();
     else nextVisibleLabel=routeLabel;
@@ -3527,9 +3529,11 @@ async function advanceRotationStep(){
     }
 
     const wrapped=(activeDayIndex>=0 && found.idx<=activeDayIndex);
+    const nextRouteLabel=(found.data.settings.routeDate || found.data.sheetName.replace(' ROUTES','')).trim();
+    if(wrapped || Date.now()-lastEmployeeSequenceV143>=60000){
+      await runEmployeeSlideSequence(wrapped ? (window.ScreenImages?.nextTitle() || nextRouteLabel) : nextRouteLabel);
+    }
     if(wrapped){
-      const nextRouteLabel=(found.data.settings.routeDate || found.data.sheetName.replace(' ROUTES','')).trim();
-      await runEmployeeSlideSequence(window.ScreenImages?.nextTitle() || nextRouteLabel);
       await window.ScreenImages?.playOnce({
         onStart:()=>{activeExtraSlide='screenImagesOverlay'},
         onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
@@ -3562,8 +3566,9 @@ async function showNoRoutes(){
   activeExtraSlide = '';
   updateTimerText();
   setDebugStatus('NO ACTIVE DAYS', true);
-  if(window.ScreenImages && !(window.matchMedia && window.matchMedia('(max-width:960px)').matches)){
-    await window.ScreenImages.playOnce({
+  if(!(window.matchMedia && window.matchMedia('(max-width:960px)').matches)){
+    await runEmployeeSlideSequence(window.ScreenImages?.nextTitle() || 'ROUTES');
+    await window.ScreenImages?.playOnce({
       onStart:()=>{activeExtraSlide='screenImagesOverlay'},
       onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
     });
