@@ -122,6 +122,6 @@
       return false;
     }
   }
-  setTimeout(cycle, 12000);
-  setInterval(cycle, 90000);
+  window.DailyResponsibilities = { playOnce };
+  console.info('Daily Responsibilities ready for central rotation');
 })();
