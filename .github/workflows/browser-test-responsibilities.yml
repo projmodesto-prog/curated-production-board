@@ -1,0 +1,44 @@
+name: Browser test native responsibilities
+on:
+  push:
+    paths:
+      - '.github/workflows/browser-test-responsibilities.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Test live production board and native slide
+        run: |
+          node - <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+            const page=await browser.newPage({viewport:{width:1920,height:1080}});
+            page.on('pageerror',e=>console.log('PAGE_ERROR',e.message.slice(0,200)));
+            page.on('console',msg=>{if(msg.type()==='error')console.log('PAGE_CONSOLE_ERROR',msg.text().slice(0,200))});
+            await page.goto('https://projmodesto-prog.github.io/curated-production-board/?test=20261123native',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForTimeout(5000);
+            const result=await page.evaluate(async()=>{
+              await refreshMasterV144();
+              await refreshResponsibilitiesV145();
+              return {master:mvixMasterV144.responsibilities,enabled:responsibilitiesV145?.enabled,taskCount:responsibilitiesV145?.rows?.length||0,seconds:responsibilitiesV145?.seconds,nativeSlide:!!document.getElementById('responsibilitiesSlide')};
+            });
+            console.log('BROWSER_NATIVE_RESPONSIBILITIES',JSON.stringify(result));
+            if(!result.master||!result.enabled||result.taskCount<2||!result.nativeSlide)throw Error('Native slide not ready');
+            await page.evaluate(()=>{showResponsibilitiesV145('PRODUCTION BOARD');});
+            await page.waitForTimeout(1000);
+            const visible=await page.locator('#responsibilitiesSlide').evaluate(el=>el.classList.contains('isActive')&&getComputedStyle(el).display!=='none');
+            console.log('NATIVE_RESPONSIBILITIES_VISIBLE',visible);
+            if(!visible)throw Error('Native slide did not become visible');
+            await browser.close();
+          })().catch(e=>{console.error('BROWSER_TEST_FAILED',e.stack);process.exit(1)});
+          JS
