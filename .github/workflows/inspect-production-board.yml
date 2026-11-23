@@ -18,6 +18,9 @@ jobs:
           import re
           s=Path('index.html').read_text()
           print('INDEX_BYTES',len(s))
+          print('RESPONSIBILITIES ELEMENT COUNT',s.count('id="responsibilitiesSlide"'))
+          print('MAIN PAGE NATIVE CALL COUNT',s.count('showResponsibilitiesV145('))
+          print('EXTRA SLIDE CLASS COUNT',s.count('class="extraSlide'))
           for term in ['const RESPONSIBILITIES_GID_V145','function shouldShowResponsibilitiesV145','async function showResponsibilitiesV145','function fetchExtraSheetOnce','function startApp','showNoRoutes()','await runEmployeeSlideSequence']:
               m=re.search(re.escape(term),s,re.I)
               if m:
