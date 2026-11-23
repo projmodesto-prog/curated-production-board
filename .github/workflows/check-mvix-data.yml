@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - '.github/workflows/check-mvix-data.yml'
+      - 'daily-responsibilities.js'
+      - 'screen-images.js'
+      - 'index.html'
   workflow_dispatch:
 permissions:
   contents: read
