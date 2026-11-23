@@ -39,6 +39,22 @@ jobs:
             const visible=await page.locator('#responsibilitiesSlide').evaluate(el=>el.classList.contains('isActive')&&getComputedStyle(el).display!=='none');
             console.log('NATIVE_RESPONSIBILITIES_VISIBLE',visible);
             if(!visible)throw Error('Native slide did not become visible');
+            const clock=await page.evaluate(()=>{
+              const date=document.getElementById('responsibilitiesClockDate');
+              const time=document.getElementById('responsibilitiesClockTime');
+              const title=document.querySelector('#responsibilitiesSlide .extraTitle');
+              const icon=document.querySelector('#responsibilitiesSlide .respClockLayout svg');
+              return {
+                date:date?.textContent?.trim()||'',
+                time:time?.textContent?.trim()||'',
+                datePosition:date?.getBoundingClientRect().left,
+                titlePosition:title?.getBoundingClientRect().left,
+                tentPresent:!!icon
+              };
+            });
+            console.log('RESPONSIBILITIES_CLOCK',JSON.stringify(clock));
+            if(!clock.date || !/\\d{1,2}:\\d{2}\\s*[AP]M/.test(clock.time) || !clock.tentPresent || !(clock.datePosition>clock.titlePosition))
+              throw Error('Right-aligned live responsibilities clock not visible');
             await page.reload({waitUntil:'domcontentloaded'});
             const automatic=await page.waitForFunction(()=>{
               const el=document.getElementById('responsibilitiesSlide');
