@@ -3625,8 +3625,8 @@ async function showNoRoutes(){
 
   const body = document.getElementById('routesBody');
   if (body){
-    body.innerHTML =
-      '<tr><td colspan="7" style="text-align:center;font-size:28px;font-weight:800;">NO ROUTES SELECTED</td></tr>';
+    const emptyMessage = masterAllowsV144('routes') ? 'NO ROUTES SELECTED' : 'PRODUCTION BOARD';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;font-size:28px;font-weight:800;">' + emptyMessage + '</td></tr>';
   }
   const dateEl = document.getElementById('dateText');
   if (dateEl) dateEl.textContent = masterAllowsV144('routes') ? 'SET SHOW DAY = YES' : 'PRODUCTION BOARD';
@@ -3644,6 +3644,14 @@ async function showNoRoutes(){
       onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
     });
     
+    // When routes are hidden, leave the enabled responsibilities slide on
+    // screen instead of returning to the empty routes board between cycles.
+    if(!masterAllowsV144('routes') && shouldShowResponsibilitiesV145()){
+      renderResponsibilitiesV145(responsibilitiesV145,responsibilitiesV145.rows.slice(0,9));
+      setExtraSlideActive('responsibilitiesSlide');
+      nextVisibleLabel='DAILY RESPONSIBILITIES';
+      updateTimerText();
+    }
     rotationTimeout=setTimeout(advanceRotationStep,5000);
   }
 }
