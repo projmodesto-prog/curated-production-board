@@ -19,7 +19,10 @@ jobs:
           from pathlib import Path
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
-          script = '<script src="daily-responsibilities.js?v=20261123b"></script>'\n          old_script = '<script src="daily-responsibilities.js?v=20261123"></script>'\n          if old_script in text:\n              text = text.replace(old_script, script)
+          script = '<script src="daily-responsibilities.js?v=20261123b"></script>'
+          old_script = '<script src="daily-responsibilities.js?v=20261123"></script>'
+          if old_script in text:
+              text = text.replace(old_script, script)
           if script not in text:
               if '</body>' not in text:
                   raise SystemExit('Cannot find </body> in index.html')
