@@ -46,29 +46,34 @@ jobs:
             },null,{timeout:65000}).then(()=>true).catch(()=>false);
             console.log('AUTOMATIC_ROTATION_VISIBLE',automatic);
             if(!automatic)throw Error('Native responsibilities did not enter automatic rotation');
-            await page.waitForTimeout(20000);
-            const fallback=await page.evaluate(()=>{
-              const slide=document.getElementById('responsibilitiesSlide');
-              return {
-                routesMessage:document.getElementById('routesBody')?.innerText||'',
-                responsibilitiesVisible:!!slide && slide.classList.contains('isActive') && getComputedStyle(slide).display!=='none',
-                routeSwitch:mvixMasterV144.routes,
-                responsibilitySwitch:mvixMasterV144.responsibilities,
-                weeklySwitch:mvixMasterV144.weekly,
-                crewSwitch:mvixMasterV144.crew,
-                imagesSwitch:mvixMasterV144.images,
-                shouldWeekly:shouldShowWeekly(),
-                shouldCrew:shouldShowTodaysCrew(),
-                imagesAvailable:window.ScreenImages?.hasSlides?.(),
-                persistentFunction:typeof holdResponsibilitiesWhenRoutesAreOff,
-                rotationInProgress,
-                activeExtraSlide,
-                taskCount:responsibilitiesV145?.rows?.length||0
-              };
-            });
-            console.log('AFTER_ROTATION_FALLBACK',JSON.stringify(fallback));
-            if(!fallback.routeSwitch && fallback.responsibilitySwitch && (!fallback.responsibilitiesVisible || fallback.routesMessage.includes('NO ROUTES SELECTED')))
-              throw Error('Disabled routes are still shown instead of responsibilities');
+            const samples=[];
+            for(let i=0;i<55;i++){
+              await page.waitForTimeout(500);
+              samples.push(await page.evaluate(()=>{
+                const visible=id=>{
+                  const el=document.getElementById(id);
+                  return !!el && el.classList.contains('isActive') && getComputedStyle(el).display!=='none';
+                };
+                return {
+                  routesOn:mvixMasterV144.routes,
+                  responsibilitiesOn:mvixMasterV144.responsibilities,
+                  screens:['responsibilitiesSlide','weeklyScheduleSlide','todayCrewSlide','screenImagesOverlay'].filter(visible),
+                  noRoutesText:(document.getElementById('routesBody')?.innerText||'').includes('NO ROUTES SELECTED')
+                };
+              }));
+            }
+            let maxBlank=0,currentBlank=0;
+            for(const sample of samples){
+              currentBlank=(!sample.routesOn && sample.responsibilitiesOn && !sample.screens.length)?currentBlank+1:0;
+              maxBlank=Math.max(maxBlank,currentBlank);
+            }
+            const noRoutesSeen=samples.some(x=>x.noRoutesText && !x.routesOn);
+            console.log('POST_ROTATION_MONITOR',JSON.stringify({
+              maxBlankHalfSecondSamples:maxBlank,noRoutesSeen,
+              screensSeen:[...new Set(samples.flatMap(x=>x.screens))],
+              first:samples.slice(0,3),last:samples.slice(-3)
+            }));
+            if(noRoutesSeen || maxBlank>5)throw Error('Unwanted blank routes board between enabled slides');
             await browser.close();
           })().catch(e=>{console.error('BROWSER_TEST_FAILED',e.stack);process.exit(1)});
           JS
