@@ -1,0 +1,68 @@
+name: Add live date and time to responsibilities
+on:
+  push:
+    paths:
+      - '.github/workflows/responsibilities-live-clock.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Add Nashville clock to the right of responsibilities slide
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          start=s.index('<section class="extraSlide" id="responsibilitiesSlide"')
+          end=s.index('</section>',start)+len('</section>')
+          block=s[start:end]
+          old='<div class="extraClock"><svg viewBox="0 0 340 150" style="width:245px;height:105px"'
+          new='<div class="extraClock"><div class="respClockLayout"><svg viewBox="0 0 340 150" style="width:76px;height:42px"'
+          assert block.count(old)==1,'Sailcloth clock header has changed'
+          block=block.replace(old,new,1)
+          oldclose='</svg></div></div>'
+          newclose='</svg><div class="respClockText"><div class="extraClockDate" id="responsibilitiesClockDate"></div><div class="extraClockTime" id="responsibilitiesClockTime"></div></div></div></div></div>'
+          assert block.count(oldclose)==1,'Sailcloth closing markup has changed'
+          block=block.replace(oldclose,newclose,1)
+          s=s[:start]+block+s[end:]
+          css="""<style id="responsibilitiesLiveClockStyles">
+          #responsibilitiesSlide .respClockLayout{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+          #responsibilitiesSlide .respClockLayout svg{flex:0 0 76px;width:76px;height:42px}
+          #responsibilitiesSlide .respClockText{text-align:right;min-width:0}
+          @media(max-width:960px){#responsibilitiesSlide .respClockLayout svg{display:none}#responsibilitiesSlide .respClockLayout{gap:0}}
+          </style>
+          """
+          assert 'responsibilitiesLiveClockStyles' not in s
+          assert '</head>' in s
+          s=s.replace('</head>',css+'</head>',1)
+          clock_anchor="  ['weeklyClockTime','todayCrewClockTime'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=time});"
+          assert s.count(clock_anchor)==1,'Clock update function has changed'
+          new_clock="""  const rDate=d.toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+            const rTime=d.toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit',hour12:true});
+            const responsibilitiesDate=document.getElementById('responsibilitiesClockDate');
+            const responsibilitiesTime=document.getElementById('responsibilitiesClockTime');
+            if(responsibilitiesDate)responsibilitiesDate.textContent=rDate;
+            if(responsibilitiesTime)responsibilitiesTime.textContent=rTime;"""
+          s=s.replace(clock_anchor,clock_anchor+'\n'+new_clock,1)
+          assert s.count('id="responsibilitiesClockDate"')==1
+          assert s.count('id="responsibilitiesClockTime"')==1
+          assert s.count('responsibilitiesLiveClockStyles')==1
+          p.write_text(s,encoding='utf-8')
+          print('RESPONSIBILITIES LIVE DATE/TIME AND SAILCLOTH ICON INSTALLED')
+          
+          PY
+      - name: Commit updated board
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Display live Nashville date and time on responsibilities slide"
+            git push
+          fi
