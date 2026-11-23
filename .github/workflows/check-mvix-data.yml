@@ -10,6 +10,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Check Sheet visibility without printing personal task data
         run: |
           python3 - <<'PY'
