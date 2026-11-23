@@ -3617,6 +3617,22 @@ async function advanceRotationStep(){
   }
 }
 
+// If routes are disabled and the only active presentation is Daily Responsibilities,
+// keep its native slide visible between timer refreshes (instead of the routes board).
+function holdResponsibilitiesWhenRoutesAreOff(){
+  if(window.matchMedia && window.matchMedia('(max-width:960px)').matches) return;
+  if(masterAllowsV144('routes') || !shouldShowResponsibilitiesV145()) return;
+  if(shouldShowWeekly() || shouldShowTodaysCrew()) return;
+  if(masterAllowsV144('images') && window.ScreenImages?.hasSlides()) return;
+  const slide=document.getElementById('responsibilitiesSlide');
+  if(!slide || slide.classList.contains('isActive')) return;
+  renderResponsibilitiesV145(responsibilitiesV145,responsibilitiesV145.rows.slice(0,9));
+  setExtraSlideActive('responsibilitiesSlide');
+  nextVisibleLabel='DAILY RESPONSIBILITIES';
+  updateTimerText();
+}
+setInterval(holdResponsibilitiesWhenRoutesAreOff,1000);
+
 async function showNoRoutes(){
   activeDayIndex = -1;
   activeSheetName = '';
