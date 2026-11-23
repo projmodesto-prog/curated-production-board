@@ -18,10 +18,9 @@ jobs:
           import re
           s=Path('index.html').read_text()
           print('INDEX_BYTES',len(s))
-          for term in ['async function advanceRotationStep','async function showNoRoutes','async function runEmployeeSlideSequence','async function rotate','function masterAllowsV144','await window.DailyResponsibilities','DailyResponsibilities?.playOnce','rotationTimeout=setTimeout','function startCountdown','function scheduleRotation']:
+          for term in ['const RESPONSIBILITIES_GID_V145','function shouldShowResponsibilitiesV145','async function showResponsibilitiesV145','function fetchExtraSheetOnce','function startApp','showNoRoutes()','await runEmployeeSlideSequence']:
               m=re.search(re.escape(term),s,re.I)
               if m:
                   print('====',term,'====')
-                  print(s[max(0,m.start()-280):min(len(s),m.start()+3500)])
-          print('END OF INSPECTION')
+                  print(s[m.start():min(len(s),m.start()+4700)])
           PY
