@@ -1,0 +1,27 @@
+name: Check MVIX responsibilities data access
+on:
+  push:
+    paths:
+      - '.github/workflows/check-mvix-data.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Sheet visibility without printing personal task data
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.parse, re
+          base='https://docs.google.com/spreadsheets/d/1wCCkZeA1R_dYFx-k-MYXMY-PUvaW4A9U5oeXQHfm7Ag/gviz/tq'
+          for name,gid,rg in [('master',1987654460,'A1:C8'),('daily',1987654470,'A1:F60'),('employee',1987654340,'A1:F12')]:
+              args=urllib.parse.urlencode({'gid':gid,'range':rg,'headers':'0','tq':'select *','tqx':'out:json;responseHandler:probe'})
+              try:
+                  with urllib.request.urlopen(base+'?'+args,timeout=20) as response:
+                      body=response.read().decode('utf-8','replace')
+                      ok=bool(re.search(r'"status"\s*:\s*"ok"',body))
+                      print(name,'HTTP',response.status,'GVIZ_OK',ok,'BODY_BYTES',len(body))
+                      if not ok: print(name,'ACCESS_ERROR')
+              except Exception as e: print(name,'FETCH_FAILURE',type(e).__name__,str(e)[:140])
+          PY
