@@ -27,7 +27,7 @@ jobs:
               if '</body>' not in text:
                   raise SystemExit('Cannot find </body> in index.html')
               text = text.replace('</body>', '  ' + script + '\n</body>', 1)
-              p.write_text(text, encoding='utf-8')
+          p.write_text(text, encoding='utf-8')
           PY
       - name: Commit integration
         run: |
