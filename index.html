@@ -3622,8 +3622,14 @@ async function advanceRotationStep(){
 function holdResponsibilitiesWhenRoutesAreOff(){
   if(window.matchMedia && window.matchMedia('(max-width:960px)').matches) return;
   if(masterAllowsV144('routes') || !shouldShowResponsibilitiesV145()) return;
-  if(shouldShowWeekly() || shouldShowTodaysCrew()) return;
-  if(masterAllowsV144('images') && window.ScreenImages?.hasSlides()) return;
+  // Do not interrupt an actual weekly schedule, crew, or image slide.
+  // An enabled switch alone must not hide the responsibilities fallback.
+  if(activeExtraSlide && activeExtraSlide!=='responsibilitiesSlide'){
+    const other=document.getElementById(activeExtraSlide);
+    if(other && other.classList.contains('isActive')) return;
+  }
+  const imagesOverlay=document.getElementById('screenImagesOverlay');
+  if(imagesOverlay && imagesOverlay.classList.contains('isActive')) return;
   const slide=document.getElementById('responsibilitiesSlide');
   if(!slide || slide.classList.contains('isActive')) return;
   renderResponsibilitiesV145(responsibilitiesV145,responsibilitiesV145.rows.slice(0,9));
