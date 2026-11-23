@@ -1,0 +1,37 @@
+name: Integrate daily responsibilities in production board
+on:
+  push:
+    paths:
+      - '.github/workflows/integrate-daily-responsibilities.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Add responsibilities slide to main board
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          script = '<script src="daily-responsibilities.js?v=20261123"></script>'
+          if script not in text:
+              if '</body>' not in text:
+                  raise SystemExit('Cannot find </body> in index.html')
+              text = text.replace('</body>', '  ' + script + '\n</body>', 1)
+              p.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Integrate Daily Responsibilities into MVIX main display"
+            git push
+          fi
