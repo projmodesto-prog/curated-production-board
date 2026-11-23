@@ -1,0 +1,54 @@
+name: Fix routes-off responsibility display
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-routes-off-responsibilities.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Make responsibilities the persistent fallback when routes are off
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""    body.innerHTML =
+      '<tr><td colspan="7" style="text-align:center;font-size:28px;font-weight:800;">NO ROUTES SELECTED</td></tr>';"""
+          new="""    const emptyMessage = masterAllowsV144('routes') ? 'NO ROUTES SELECTED' : 'PRODUCTION BOARD';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;font-size:28px;font-weight:800;">' + emptyMessage + '</td></tr>';"""
+          if old not in s:raise SystemExit('Routes placeholder not found')
+          s=s.replace(old,new,1)
+          old2='    rotationTimeout=setTimeout(advanceRotationStep,5000);'
+          new2="""    // When routes are disabled but responsibilities are enabled, avoid showing
+    // the empty routes board between the native responsibilities presentations.
+    if(!masterAllowsV144('routes') && shouldShowResponsibilitiesV145()){
+      renderResponsibilitiesV145(responsibilitiesV145,responsibilitiesV145.rows.slice(0,9));
+      setExtraSlideActive('responsibilitiesSlide');
+      nextVisibleLabel='DAILY RESPONSIBILITIES';
+      updateTimerText();
+    }
+    rotationTimeout=setTimeout(advanceRotationStep,5000);"""
+          if s.count(old2)!=1:raise SystemExit('Unexpected no-routes timer count')
+          s=s.replace(old2,new2,1)
+          assert s.count('setExtraSlideActive(')>=2
+          assert s.count('NO ROUTES SELECTED')==1
+          assert s.count('showResponsibilitiesV145(')>=2
+          p.write_text(s,encoding='utf-8')
+          print('ROUTES-OFF RESPONSIBILITIES FALLBACK INSTALLED')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Keep responsibilities visible when routes are turned off"
+            git push
+          fi
