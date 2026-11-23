@@ -25,14 +25,11 @@ jobs:
               raise SystemExit('Expected one responsibilities script tag; got '+str(tag_count))
           marker = "await window.DailyResponsibilities?.playOnce?.();"
           if marker not in s:
-              source = "      await displayDay(found,true);"
-              if s.count(source) != 1:
-                  raise SystemExit('Cannot locate central route sequence')
-              s = s.replace(source, "      " + marker + "\n" + source, 1)
-              source = "    rotationTimeout=setTimeout(advanceRotationStep,5000);"
-              if s.count(source) != 1:
-                  raise SystemExit('Cannot locate no-routes central sequence')
-              s = s.replace(source, "    " + marker + "\n" + source, 1)
+              s, route_count = re.subn(r'(?m)^(\s*)await displayDay\(found,\s*true\);', lambda m: m.group(1) + marker + "\n" + m.group(0), s, count=1)
+              s, empty_count = re.subn(r'(?m)^(\s*)rotationTimeout\s*=\s*setTimeout\(advanceRotationStep,\s*5000\);', lambda m: m.group(1) + marker + "\n" + m.group(0), s, count=1)
+              print('Hooks:', route_count,empty_count)
+              if route_count != 1 or empty_count != 1:
+                  raise SystemExit('Could not locate both rotation insertions')
           p.write_text(s,encoding='utf-8')
           print('Central rotation integration verified:', s.count(marker), 'hooks')
           if s.count(marker) != 2:
