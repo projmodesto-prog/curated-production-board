@@ -53,7 +53,17 @@ jobs:
                 routesMessage:document.getElementById('routesBody')?.innerText||'',
                 responsibilitiesVisible:!!slide && slide.classList.contains('isActive') && getComputedStyle(slide).display!=='none',
                 routeSwitch:mvixMasterV144.routes,
-                responsibilitySwitch:mvixMasterV144.responsibilities
+                responsibilitySwitch:mvixMasterV144.responsibilities,
+                weeklySwitch:mvixMasterV144.weekly,
+                crewSwitch:mvixMasterV144.crew,
+                imagesSwitch:mvixMasterV144.images,
+                shouldWeekly:shouldShowWeekly(),
+                shouldCrew:shouldShowTodaysCrew(),
+                imagesAvailable:window.ScreenImages?.hasSlides?.(),
+                persistentFunction:typeof holdResponsibilitiesWhenRoutesAreOff,
+                rotationInProgress,
+                activeExtraSlide,
+                taskCount:responsibilitiesV145?.rows?.length||0
               };
             });
             console.log('AFTER_ROTATION_FALLBACK',JSON.stringify(fallback));
