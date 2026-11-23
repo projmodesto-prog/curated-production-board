@@ -25,3 +25,16 @@ jobs:
                       if not ok: print(name,'ACCESS_ERROR')
               except Exception as e: print(name,'FETCH_FAILURE',type(e).__name__,str(e)[:140])
           PY
+      - name: Verify javascript syntax and central hooks
+        run: |
+          node --check daily-responsibilities.js
+          node --check screen-images.js
+          python3 - <<'PY'
+          from pathlib import Path
+          index=Path('index.html').read_text()
+          assert index.count('await window.DailyResponsibilities?.playOnce?.();')==2
+          assert index.count('daily-responsibilities.js?v=20261123c')==1
+          assert 'setInterval(cycle' not in Path('daily-responsibilities.js').read_text()
+          assert 'Daily responsibilities MVIX slide' not in Path('screen-images.js').read_text()
+          print('MVIX ROTATION INTEGRATION OK')
+          PY
