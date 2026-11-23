@@ -13,28 +13,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Add responsibilities slide to main board
+      - name: Add responsibilities to the same MVIX rotation as employee schedules
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
-          text = p.read_text(encoding='utf-8')
-          script = '<script src="daily-responsibilities.js?v=20261123b"></script>'
-          old_script = '<script src="daily-responsibilities.js?v=20261123"></script>'
-          if old_script in text:
-              text = text.replace(old_script, script)
-          if script not in text:
-              if '</body>' not in text:
-                  raise SystemExit('Cannot find </body> in index.html')
-              text = text.replace('</body>', '  ' + script + '\n</body>', 1)
-          p.write_text(text, encoding='utf-8')
+          s = p.read_text(encoding='utf-8')
+          s, tag_count = re.subn(r'<script src="daily-responsibilities\.js\?v=[^"]+"></script>', '<script src="daily-responsibilities.js?v=20261123c"></script>', s)
+          if tag_count != 1:
+              raise SystemExit('Expected one responsibilities script tag; got '+str(tag_count))
+          marker = "await window.DailyResponsibilities?.playOnce?.();"
+          if marker not in s:
+              source = "      await displayDay(found,true);"
+              if s.count(source) != 1:
+                  raise SystemExit('Cannot locate central route sequence')
+              s = s.replace(source, "      " + marker + "\n" + source, 1)
+              source = "    rotationTimeout=setTimeout(advanceRotationStep,5000);"
+              if s.count(source) != 1:
+                  raise SystemExit('Cannot locate no-routes central sequence')
+              s = s.replace(source, "    " + marker + "\n" + source, 1)
+          p.write_text(s,encoding='utf-8')
+          print('Central rotation integration verified:', s.count(marker), 'hooks')
+          if s.count(marker) != 2:
+              raise SystemExit('Expected exactly 2 rotation hooks')
           PY
-      - name: Commit integration
+      - name: Commit main display integration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           if ! git diff --cached --quiet; then
-            git commit -m "Integrate Daily Responsibilities into MVIX main display"
+            git commit -m "Rotate Daily Responsibilities with existing MVIX schedule screens"
             git push
           fi
