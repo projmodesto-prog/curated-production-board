@@ -59,9 +59,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           index=Path('index.html').read_text()
-          assert index.count('await window.DailyResponsibilities?.playOnce?.();')==2
-          assert index.count('daily-responsibilities.js?v=20261123c')==1
-          assert 'setInterval(cycle' not in Path('daily-responsibilities.js').read_text()
+          assert 'daily-responsibilities.js?v=' not in index
+          assert 'await window.DailyResponsibilities?.playOnce?.();' not in index
+          assert index.count('showResponsibilitiesV145(')>=2
+          assert index.count('id="responsibilitiesSlide"')==1
+          assert 'const headerIndex=raw.findIndex' in index
           assert 'Daily responsibilities MVIX slide' not in Path('screen-images.js').read_text()
-          print('MVIX ROTATION INTEGRATION OK')
+          print('NATIVE MVIX RESPONSIBILITIES INTEGRATION OK')
           PY
