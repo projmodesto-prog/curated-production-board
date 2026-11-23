@@ -67,25 +67,25 @@
     if (className) node.className = className;
     return node;
   }
-  async function cycle() {
-    if (showing) return;
+  async function playOnce() {
+    if (showing) return false;
     try {
       const [controls, data] = await Promise.all([
         query(1987654460, 'A1:C8'), query(1987654470, 'A1:F60')
       ]);
       const config = new Map(controls.map(row => [String(row[0] || '').toUpperCase(), row[1]]));
-      if (!yes(config.get('SHOW DAILY RESPONSIBILITIES'))) return;
-      if (!data.some(row => String(row[0]).toUpperCase() === 'DATE')) return;
+      if (!yes(config.get('SHOW DAILY RESPONSIBILITIES'))) return false;
+      if (!data.some(row => String(row[0]).toUpperCase() === 'DATE')) return false;
       const dateRow = data.find(row => String(row[0]).toUpperCase() === 'DATE');
       const show = dateRow?.[5], date = dateRow?.[1];
-      if (!yes(show)) return;
+      if (!yes(show)) return false;
       const normalizeDate = value => {
         const m = String(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
         return m ? m[1].padStart(2,'0') + '/' + m[2].padStart(2,'0') + '/' + m[3] : value;
       };
       // The master switch and SHOW DAY govern visibility, as with the schedule.\n      // Date is displayed as a label, not used to silently suppress the slide.
       const taskHeader = data.findIndex(row => String(row[0]).trim().toUpperCase() === 'TIME' && String(row[1]).trim().toUpperCase() === 'RESPONSIBILITY');\n      const tasks = data.slice(taskHeader >= 0 ? taskHeader + 1 : 4).filter(row => row[1] || row[2] || row[4]);
-      if (!tasks.length) return;
+      if (!tasks.length) return false;
       const duration = Math.max(5, Math.min(60, Number(data[2]?.[1]) || 15));
       const host = ensureOverlay();
       const frag = document.createDocumentFragment();
@@ -112,10 +112,12 @@
       await new Promise(resolve => setTimeout(resolve, duration * 1000));
       host.classList.remove('active'); host.setAttribute('aria-hidden','true');
       showing = false;
+      return true;
     } catch (error) {
       if (overlay) {overlay.classList.remove('active');overlay.setAttribute('aria-hidden','true');}
       showing = false;
       console.warn('Daily responsibilities slide:', error);
+      return false;
     }
   }
   setTimeout(cycle, 12000);
