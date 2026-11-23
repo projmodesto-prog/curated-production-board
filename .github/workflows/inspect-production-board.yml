@@ -21,9 +21,9 @@ jobs:
           print('RESPONSIBILITIES ELEMENT COUNT',s.count('id="responsibilitiesSlide"'))
           print('MAIN PAGE NATIVE CALL COUNT',s.count('showResponsibilitiesV145('))
           print('EXTRA SLIDE CLASS COUNT',s.count('class="extraSlide'))
-          for term in ['const RESPONSIBILITIES_GID_V145','function shouldShowResponsibilitiesV145','async function showResponsibilitiesV145','function fetchExtraSheetOnce','function startApp','showNoRoutes()','await runEmployeeSlideSequence']:
+          for term in ['function hideExtraSlides','async function showExtraSlide','async function showNoRoutes','function scheduleRotation','async function advanceRotationStep']:
               m=re.search(re.escape(term),s,re.I)
               if m:
-                  print('====',term,'====')
-                  print(s[m.start():min(len(s),m.start()+4700)])
+                  print('SECTION',term)
+                  print(s[m.start():min(len(s),m.start()+3100)])
           PY
