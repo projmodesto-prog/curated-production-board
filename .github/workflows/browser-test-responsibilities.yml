@@ -39,6 +39,13 @@ jobs:
             const visible=await page.locator('#responsibilitiesSlide').evaluate(el=>el.classList.contains('isActive')&&getComputedStyle(el).display!=='none');
             console.log('NATIVE_RESPONSIBILITIES_VISIBLE',visible);
             if(!visible)throw Error('Native slide did not become visible');
+            await page.reload({waitUntil:'domcontentloaded'});
+            const automatic=await page.waitForFunction(()=>{
+              const el=document.getElementById('responsibilitiesSlide');
+              return !!el && el.classList.contains('isActive') && getComputedStyle(el).display!=='none';
+            },null,{timeout:65000}).then(()=>true).catch(()=>false);
+            console.log('AUTOMATIC_ROTATION_VISIBLE',automatic);
+            if(!automatic)throw Error('Native responsibilities did not enter automatic rotation');
             await browser.close();
           })().catch(e=>{console.error('BROWSER_TEST_FAILED',e.stack);process.exit(1)});
           JS
