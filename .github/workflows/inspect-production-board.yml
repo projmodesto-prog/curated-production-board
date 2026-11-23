@@ -21,9 +21,9 @@ jobs:
           print('RESPONSIBILITIES ELEMENT COUNT',s.count('id="responsibilitiesSlide"'))
           print('MAIN PAGE NATIVE CALL COUNT',s.count('showResponsibilitiesV145('))
           print('EXTRA SLIDE CLASS COUNT',s.count('class="extraSlide'))
-          for term in ['function hideExtraSlides','async function showExtraSlide','async function showNoRoutes','function scheduleRotation','async function advanceRotationStep']:
-              m=re.search(re.escape(term),s,re.I)
-              if m:
-                  print('SECTION',term)
-                  print(s[m.start():min(len(s),m.start()+3100)])
+          for term in ['id="responsibilitiesSlide"','#responsibilitiesSlide','.responsibilitiesSlide','responsibilitiesHeader','responsibilitiesTitle','responsibilitiesSubtitle','function updateExtraClocks','setInterval(updateExtraClocks']:
+              matches=list(re.finditer(re.escape(term),s,re.I))
+              print('SECTION',term,'COUNT',len(matches))
+              for m in matches[:4]:
+                  print(s[max(0,m.start()-500):min(len(s),m.start()+2200)])
           PY
