@@ -53,7 +53,7 @@ jobs:
               };
             });
             console.log('RESPONSIBILITIES_CLOCK',JSON.stringify(clock));
-            if(!clock.date || !/\\d{1,2}:\\d{2}\\s*[AP]M/.test(clock.time) || !clock.tentPresent || !(clock.datePosition>clock.titlePosition))
+            if(!clock.date || !/[0-9]{1,2}:[0-9]{2}[ ]*[AP]M/.test(clock.time) || !clock.tentPresent || !(clock.datePosition>clock.titlePosition))
               throw Error('Right-aligned live responsibilities clock not visible');
             await page.reload({waitUntil:'domcontentloaded'});
             const automatic=await page.waitForFunction(()=>{
