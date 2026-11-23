@@ -1,0 +1,26 @@
+name: Inspect production board integration
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-production-board.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect main board and sheet integration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text()
+          print('INDEX_BYTES',len(s))
+          for term in ['daily-responsibilities.js','screen-images.js','ScreenImages','playOnce','gviz','EMPLOYEE SCHEDULE','MVIX MASTER CONTROLS','DOMContentLoaded']:
+              matches=list(re.finditer(re.escape(term),s,re.I))
+              print('TERM',term,'COUNT',len(matches))
+              for m in matches[:4]:
+                  print('FRAGMENT',s[max(0,m.start()-350):min(len(s),m.end()+450)].replace(chr(10),' ')[:900])
+          PY
