@@ -3606,6 +3606,8 @@ async function advanceRotationStep(){
       });
     }
 
+    await window.DailyResponsibilities?.playOnce?.();
+
     await displayDay(found,true);
   }finally{
     rotationInProgress=false;
@@ -3638,6 +3640,7 @@ async function showNoRoutes(){
       onStart:()=>{activeExtraSlide='screenImagesOverlay'},
       onEnd:()=>{if(activeExtraSlide==='screenImagesOverlay') activeExtraSlide=''}
     });
+    await window.DailyResponsibilities?.playOnce?.();
     rotationTimeout=setTimeout(advanceRotationStep,5000);
   }
 }
@@ -5665,5 +5668,5 @@ window.addEventListener('resize',boot);boot();
  mq.addEventListener('change',apply);apply();
 })();
 </script>
-  <script src="daily-responsibilities.js?v=20261123b"></script>
+  <script src="daily-responsibilities.js?v=20261123c"></script>
 </body></html>
