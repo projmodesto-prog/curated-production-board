@@ -83,8 +83,10 @@
         const m = String(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
         return m ? m[1].padStart(2,'0') + '/' + m[2].padStart(2,'0') + '/' + m[3] : value;
       };
-      // The master switch and SHOW DAY govern visibility, as with the schedule.\n      // Date is displayed as a label, not used to silently suppress the slide.
-      const taskHeader = data.findIndex(row => String(row[0]).trim().toUpperCase() === 'TIME' && String(row[1]).trim().toUpperCase() === 'RESPONSIBILITY');\n      const tasks = data.slice(taskHeader >= 0 ? taskHeader + 1 : 4).filter(row => row[1] || row[2] || row[4]);
+      // The master switch and SHOW DAY govern visibility, as with the schedule.
+      // Date is displayed as a label, not used to silently suppress the slide.
+      const taskHeader = data.findIndex(row => String(row[0]).trim().toUpperCase() === 'TIME' && String(row[1]).trim().toUpperCase() === 'RESPONSIBILITY');
+      const tasks = data.slice(taskHeader >= 0 ? taskHeader + 1 : 4).filter(row => row[1] || row[2] || row[4]);
       if (!tasks.length) return false;
       const duration = Math.max(5, Math.min(60, Number(data[2]?.[1]) || 15));
       const host = ensureOverlay();
