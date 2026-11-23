@@ -1877,7 +1877,13 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
 <style id="schedule-moon-clean">.scheduleMoon{font-size:.72em;line-height:1;display:inline-block;vertical-align:baseline;margin-right:.12em}</style>
 <style>
 .respBodyV145{display:flex;flex-direction:column;background:#eef2f3}#respCountsV145{display:flex;background:#214653;color:#fff;flex:0 0 auto}#respCountsV145>div{flex:1;text-align:center;padding:12px;font-size:17px;font-weight:800;border-right:1px solid #58717c}#respCountsV145 strong{display:block;font-size:32px}.respTableWrapV145{flex:1;overflow:auto}#respTableV145{width:100%;border-collapse:collapse;table-layout:fixed;color:#101416}#respTableV145 th{background:#0a2029;color:white;padding:14px 8px;font-size:19px;text-align:left}#respTableV145 td{padding:13px 9px;font-size:20px;line-height:1.2;overflow-wrap:anywhere;border-bottom:1px solid #8faab6;border-right:1px solid #8faab6;vertical-align:middle}#respTableV145 td:nth-child(2){font-weight:800}#respTableV145 tbody tr:nth-child(odd){background:#f9fcff}#respTableV145 tbody tr:nth-child(even){background:#a9cde0}.respStatusV145{display:block;text-align:center;border-radius:4px;font-size:16px;font-weight:900;padding:8px 4px;background:#ffd76a}.respStatusV145.progress{background:#64b5f6}.respStatusV145.done{background:#81c784}
-</style></head>
+</style><style id="responsibilitiesLiveClockStyles">
+#responsibilitiesSlide .respClockLayout{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+#responsibilitiesSlide .respClockLayout svg{flex:0 0 76px;width:76px;height:42px}
+#responsibilitiesSlide .respClockText{text-align:right;min-width:0}
+@media(max-width:960px){#responsibilitiesSlide .respClockLayout svg{display:none}#responsibilitiesSlide .respClockLayout{gap:0}}
+</style>
+</head>
 <body>
 <!-- V113 FINAL: Sheet-driven weather/messages/photos. Photos display only when SHOW=YES. No demo/preview images. -->
 <div id="viewport">
@@ -1966,7 +1972,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-f
     </section>
 
     <section class="extraSlide" id="responsibilitiesSlide" aria-hidden="true">
-<div class="extraSlideHeader"><div class="extraBrand"><img id="responsibilitiesLogo" alt="Curated Events"></div><div class="extraTitleBlock"><div class="extraTitle">DAILY RESPONSIBILITIES</div><div class="extraSubtitle" id="responsibilitiesSubtitle">TENT &amp; PRODUCTION DIVISION</div></div><div class="extraClock"><svg viewBox="0 0 340 150" style="width:245px;height:105px" aria-label="Sailcloth tent"><path d="M12 98 Q59 87 91 25 Q118 72 170 78 Q215 72 249 25 Q280 88 328 98 Q295 106 249 98 Q208 108 170 98 Q129 108 91 98 Q48 106 12 98Z" fill="#f5f5f0"/><path d="M24 99V137 M91 99V137 M170 99V137 M249 99V137 M316 99V137 M91 25V4 L113 10 L91 16 M249 25V4 L271 10 L249 16" stroke="#f5f5f0" stroke-width="3" fill="none"/><path d="M91 28 Q82 73 58 101 M91 28 Q115 85 148 101 M249 28 Q225 85 192 101 M249 28 Q258 73 282 101 M12 98L1 137 M328 98L339 137" stroke="#a1b3bb" stroke-width="2" fill="none"/></svg></div></div>
+<div class="extraSlideHeader"><div class="extraBrand"><img id="responsibilitiesLogo" alt="Curated Events"></div><div class="extraTitleBlock"><div class="extraTitle">DAILY RESPONSIBILITIES</div><div class="extraSubtitle" id="responsibilitiesSubtitle">TENT &amp; PRODUCTION DIVISION</div></div><div class="extraClock"><div class="respClockLayout"><svg viewBox="0 0 340 150" style="width:76px;height:42px" aria-label="Sailcloth tent"><path d="M12 98 Q59 87 91 25 Q118 72 170 78 Q215 72 249 25 Q280 88 328 98 Q295 106 249 98 Q208 108 170 98 Q129 108 91 98 Q48 106 12 98Z" fill="#f5f5f0"/><path d="M24 99V137 M91 99V137 M170 99V137 M249 99V137 M316 99V137 M91 25V4 L113 10 L91 16 M249 25V4 L271 10 L249 16" stroke="#f5f5f0" stroke-width="3" fill="none"/><path d="M91 28 Q82 73 58 101 M91 28 Q115 85 148 101 M249 28 Q225 85 192 101 M249 28 Q258 73 282 101 M12 98L1 137 M328 98L339 137" stroke="#a1b3bb" stroke-width="2" fill="none"/></svg><div class="respClockText"><div class="extraClockDate" id="responsibilitiesClockDate"></div><div class="extraClockTime" id="responsibilitiesClockTime"></div></div></div></div></div>
 <div class="extraSlideBody respBodyV145"><div id="respCountsV145"></div><div class="respTableWrapV145"><table id="respTableV145"><colgroup><col style="width:9%"><col style="width:27%"><col style="width:20%"><col style="width:15%"><col style="width:12%"><col style="width:17%"></colgroup><thead><tr><th>TIME</th><th>RESPONSIBILITY</th><th>ASSIGNED CREW</th><th>LOCATION</th><th>STATUS</th><th>NOTES</th></tr></thead><tbody id="respRowsV145"></tbody></table></div></div><div class="extraFooter"><span>SAFETY • QUALITY • TEAMWORK</span><span class="extraCountdown"></span></div></section>
 <section class="extraSlide" id="todayCrewSlide" aria-hidden="true">
       <div class="extraSlideHeader">
@@ -2555,6 +2561,12 @@ function updateExtraClocks(){
   const time=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   ['weeklyClockDate','todayCrewClockDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=date});
   ['weeklyClockTime','todayCrewClockTime'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=time});
+  const rDate=d.toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+  const rTime=d.toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit',hour12:true});
+  const responsibilitiesDate=document.getElementById('responsibilitiesClockDate');
+  const responsibilitiesTime=document.getElementById('responsibilitiesClockTime');
+  if(responsibilitiesDate)responsibilitiesDate.textContent=rDate;
+  if(responsibilitiesTime)responsibilitiesTime.textContent=rTime;
 }
 
 function hideExtraSlides(){
