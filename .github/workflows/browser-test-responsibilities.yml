@@ -46,6 +46,19 @@ jobs:
             },null,{timeout:65000}).then(()=>true).catch(()=>false);
             console.log('AUTOMATIC_ROTATION_VISIBLE',automatic);
             if(!automatic)throw Error('Native responsibilities did not enter automatic rotation');
+            await page.waitForTimeout(20000);
+            const fallback=await page.evaluate(()=>{
+              const slide=document.getElementById('responsibilitiesSlide');
+              return {
+                routesMessage:document.getElementById('routesBody')?.innerText||'',
+                responsibilitiesVisible:!!slide && slide.classList.contains('isActive') && getComputedStyle(slide).display!=='none',
+                routeSwitch:mvixMasterV144.routes,
+                responsibilitySwitch:mvixMasterV144.responsibilities
+              };
+            });
+            console.log('AFTER_ROTATION_FALLBACK',JSON.stringify(fallback));
+            if(!fallback.routeSwitch && fallback.responsibilitySwitch && (!fallback.responsibilitiesVisible || fallback.routesMessage.includes('NO ROUTES SELECTED')))
+              throw Error('Disabled routes are still shown instead of responsibilities');
             await browser.close();
           })().catch(e=>{console.error('BROWSER_TEST_FAILED',e.stack);process.exit(1)});
           JS
