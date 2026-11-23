@@ -29,6 +29,29 @@ jobs:
                       if not ok: print(name,'ACCESS_ERROR')
               except Exception as e: print(name,'FETCH_FAILURE',type(e).__name__,str(e)[:140])
           PY
+      - name: Inspect controls row alignment without private task data
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.parse, json, re
+          base='https://docs.google.com/spreadsheets/d/1wCCkZeA1R_dYFx-k-MYXMY-PUvaW4A9U5oeXQHfm7Ag/gviz/tq'
+          for name,gid,rg in [('master',1987654460,'A1:C8'),('daily',1987654470,'A1:F15')]:
+              q=urllib.parse.urlencode({'gid':gid,'range':rg,'headers':0,'tq':'select *','tqx':'out:json;responseHandler:probe'})
+              raw=urllib.request.urlopen(base+'?'+q,timeout=15).read().decode()
+              body=json.loads(raw[raw.index('(')+1:raw.rindex(')')])
+              rows=body['table']['rows']
+              print(name,'ROW_COUNT',len(rows))
+              for i,row in enumerate(rows[:12]):
+                  cells=row.get('c') or []
+                  first=str((cells[0] or {}).get('f') or (cells[0] or {}).get('v') or '') if cells else ''
+                  if name=='master':
+                      second=str((cells[1] or {}).get('f') or (cells[1] or {}).get('v') or '') if len(cells)>1 else ''
+                      print('MASTER_ROW',i,repr(first),repr(second))
+                  elif i<=4:
+                      second=str((cells[1] or {}).get('f') or (cells[1] or {}).get('v') or '') if len(cells)>1 else ''
+                      show=str((cells[5] or {}).get('f') or (cells[5] or {}).get('v') or '') if len(cells)>5 else ''
+                      print('DAILY_ROW',i,repr(first),repr(second) if i in [1,2] else '[omitted]',repr(show))
+              if name=='daily': print('TASKS_AFTER_HEADER',sum(bool((r.get('c') or [None,None])[1]) for r in rows[4:]))
+          PY
       - name: Verify javascript syntax and central hooks
         run: |
           node --check daily-responsibilities.js
